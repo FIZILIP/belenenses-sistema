@@ -1,0 +1,8 @@
+@app.route('/compra/deletar/<int:id>')
+@login_required
+def deletar_compra(id):
+    compra = Compra.query.get_or_404(id)
+    db.session.delete(compra)
+    db.session.commit()
+    flash('Compra removida com sucesso!', 'success')
+    return redirect(url_for('compras'))

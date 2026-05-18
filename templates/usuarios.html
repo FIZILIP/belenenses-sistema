@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .usuarios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .usuario-card {
+        background: linear-gradient(145deg, #111827, #0F1117);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .usuario-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0,51,160,0.25);
+        border-color: rgba(255,215,0,0.3);
+    }
+    
+    .usuario-card.admin { border-left: 4px solid #FFD700; }
+    .usuario-card.comum { border-left: 4px solid #3B82F6; }
+    
+    .usuario-header {
+        background: linear-gradient(135deg, #0033A0 0%, #001a4d 100%);
+        padding: 24px 20px;
+        text-align: center;
+        position: relative;
+    }
+    
+    .usuario-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        border: 4px solid #FFD700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 32px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    
+    .avatar-admin {
+        background: linear-gradient(135deg, #FFD700, #FFED4A);
+        color: #0033A0;
+    }
+    
+    .avatar-comum {
+        background: rgba(255,255,255,0.1);
+        color: #60A5FA;
+    }
+    
+    .usuario-nome {
+        font-size: 18px;
+        font-weight: 700;
+        color: #FFFFFF;
+        margin-bottom: 2px;
+    }
+    
+    .usuario-tipo {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .tipo-admin { background: rgba(255,215,0,0.2); color: #FFD700; }
+    .tipo-comum { background: rgba(59,130,246,0.2); color: #60A5FA; }
+    
+    .usuario-body {
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .usuario-email {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #9CA3AF;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    
+    .usuario-email i { color: #0033A0; }
+    
+    .usuario-id {
+        font-size: 11px;
+        color: #6B7280;
+        margin-bottom: 12px;
+    }
+    
+    .voce-badge {
+        display: inline-block;
+        background: rgba(16,185,129,0.15);
+        color: #10B981;
+        padding: 4px 14px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-top: 8px;
+    }
+    
+    .usuario-footer {
+        padding: 0 20px 20px;
+    }
+    
+    .btn-remover-usuario {
+        width: 100%;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(239,68,68,0.2);
+        background: rgba(239,68,68,0.08);
+        color: #EF4444;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .btn-remover-usuario:hover {
+        background: rgba(239,68,68,0.15);
+        color: #EF4444;
+    }
+    
+    .form-criar-usuario {
+        background: linear-gradient(145deg, #111827, #0F1117);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .form-criar-usuario .form-control,
+    .form-criar-usuario .form-select {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    
+    .form-criar-usuario .form-control:focus,
+    .form-criar-usuario .form-select:focus {
+        border-color: #FFD700;
+        box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+        background: rgba(255,255,255,0.08);
+    }
+    
+    .form-criar-usuario .form-control::placeholder {
+        color: #6B7280;
+    }
+    
+    .btn-criar-usuario {
+        background: linear-gradient(135deg, #0033A0, #FFD700);
+        border: none;
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 700;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        transition: all 0.3s;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .btn-criar-usuario:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,51,160,0.4);
+    }
+    
+    .resumo-usuarios {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .resumo-card {
+        background: linear-gradient(145deg, #111827, #0F1117);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .resumo-valor {
+        font-size: 28px;
+        font-weight: 900;
+        margin-bottom: 4px;
+    }
+    
+    .resumo-label {
+        font-size: 11px;
+        color: #6B7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .r-total { color: #FFD700; }
+    .r-admin { color: #FFD700; }
+    .r-comum { color: #60A5FA; }
+    
+    @media (max-width: 768px) {
+        .resumo-usuarios {
+            grid-template-columns: 1fr;
+        }
+        .form-criar-usuario .row > div {
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
+{% set admins = usuarios|selectattr('is_admin','equalto',True)|list %}
+{% set comuns = usuarios|selectattr('is_admin','equalto',False)|list %}
+
+<div class="d-flex align-items-center mb-4">
+    <div>
+        <h2 class="text-white fw-bold mb-1">
+            <i class="fas fa-user-shield me-2" style="color: #FFD700;"></i>Usuários
+        </h2>
+        <p class="text-muted mb-0" style="font-size: 14px;">{{ usuarios|length }} usuário(s) cadastrado(s)</p>
+    </div>
+</div>
+
+<!-- RESUMO -->
+<div class="resumo-usuarios">
+    <div class="resumo-card">
+        <div class="resumo-valor r-total">{{ usuarios|length }}</div>
+        <div class="resumo-label">Total de Usuários</div>
+    </div>
+    <div class="resumo-card">
+        <div class="resumo-valor r-admin">{{ admins|length }}</div>
+        <div class="resumo-label">Administradores</div>
+    </div>
+    <div class="resumo-card">
+        <div class="resumo-valor r-comum">{{ comuns|length }}</div>
+        <div class="resumo-label">Usuários Comuns</div>
+    </div>
+</div>
+
+<!-- FORMULÁRIO CRIAR USUÁRIO -->
+<div class="form-criar-usuario">
+    <h5 class="text-white mb-3">
+        <i class="fas fa-user-plus me-2" style="color: #FFD700;"></i>Criar Novo Usuário
+    </h5>
+    <form method="POST" action="/criar-usuario">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label" style="color: #D1D5DB; font-size: 12px;">Usuário</label>
+                <input type="text" name="username" class="form-control" placeholder="Nome de usuário" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" style="color: #D1D5DB; font-size: 12px;">Email</label>
+                <input type="email" name="email" class="form-control" placeholder="email@exemplo.com" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" style="color: #D1D5DB; font-size: 12px;">Senha</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" style="color: #D1D5DB; font-size: 12px;">Tipo</label>
+                <select name="is_admin" class="form-select">
+                    <option value="0">Usuário Comum</option>
+                    <option value="1">Administrador</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn-criar-usuario">
+                    <i class="fas fa-plus"></i> Criar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- GRID DE CARDS -->
+{% if usuarios %}
+<div class="usuarios-grid">
+    {% for u in usuarios %}
+    <div class="usuario-card {% if u.is_admin %}admin{% else %}comum{% endif %}">
+        <div class="usuario-header">
+            <div class="usuario-avatar {% if u.is_admin %}avatar-admin{% else %}avatar-comum{% endif %}">
+                <i class="fas {% if u.is_admin %}fa-crown{% else %}fa-user{% endif %}"></i>
+            </div>
+            <div class="usuario-nome">{{ u.username }}</div>
+            <span class="usuario-tipo {% if u.is_admin %}tipo-admin{% else %}tipo-comum{% endif %}">
+                {% if u.is_admin %}👑 Admin{% else %}👤 Usuário{% endif %}
+            </span>
+        </div>
+        
+        <div class="usuario-body">
+            <div class="usuario-email">
+                <i class="fas fa-envelope"></i> {{ u.email }}
+            </div>
+            <div class="usuario-id">ID: #{{ u.id }}</div>
+            
+            {% if u.id == current_user.id %}
+            <span class="voce-badge">
+                <i class="fas fa-circle me-1" style="font-size: 6px;"></i> Você
+            </span>
+            {% endif %}
+        </div>
+        
+        <div class="usuario-footer">
+            {% if u.id != current_user.id %}
+            <a href="/deletar-usuario/{{ u.id }}" 
+               class="btn-remover-usuario"
+               onclick="return confirm('Remover {{ u.username }}?')">
+                <i class="fas fa-trash"></i> Remover
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-user-shield fa-5x mb-4" style="color: rgba(255,255,255,0.05);"></i>
+    <h4 class="text-white mb-2">Nenhum usuário</h4>
+    <p class="text-muted">Crie o primeiro usuário usando o formulário acima.</p>
+</div>
+{% endif %}
+{% endblock %}

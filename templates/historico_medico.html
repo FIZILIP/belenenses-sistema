@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .historico-header {
+        background: linear-gradient(135deg, #0033A0, #001a4d);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .historico-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid #FFD700;
+        object-fit: cover;
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .ficha-linha {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        background: linear-gradient(145deg, #111827, #0F1117);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 14px;
+        margin-bottom: 12px;
+        transition: all 0.2s;
+    }
+    
+    .ficha-linha:hover {
+        border-color: rgba(255,215,0,0.2);
+    }
+    
+    .ficha-linha.em_tratamento { border-left: 4px solid #EF4444; }
+    .ficha-linha.recuperado { border-left: 4px solid #10B981; }
+</style>
+
+<div class="historico-header">
+    {% if atleta.foto %}
+    <img src="{{ url_for('static', filename='uploads/atletas/' + atleta.foto) }}" class="historico-avatar">
+    {% else %}
+    <div class="historico-avatar" style="display:flex;align-items:center;justify-content:center;font-size:36px;color:#FFD700;">
+        <i class="fas fa-user"></i>
+    </div>
+    {% endif %}
+    <div>
+        <h3 class="text-white mb-1">{{ atleta.nome }}</h3>
+        <span style="color:#9CA3AF;">{{ atleta.posicao or '' }} {% if atleta.categoria %}• {{ atleta.categoria }}{% endif %}</span>
+        <br>
+        <a href="{{ url_for('atletas') }}" class="btn btn-outline-premium btn-sm mt-2">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<h4 class="text-white mb-3"><i class="fas fa-file-medical me-2" style="color:#FFD700;"></i>Histórico Médico</h4>
+
+{% if fichas %}
+    {% for ficha in fichas %}
+    <div class="ficha-linha {{ ficha.status }}">
+        <div>
+            <strong style="color:#FFD700;">{{ ficha.tipo_lesao or 'Lesão não especificada' }}</strong>
+            <div style="color:#9CA3AF;font-size:12px;margin-top:4px;">
+                <i class="fas fa-calendar-plus"></i> {{ ficha.data_lesao.strftime('%d/%m/%Y') if ficha.data_lesao else '—' }}
+                {% if ficha.data_retorno_previsto %}
+                • <i class="fas fa-calendar-check"></i> Previsão: {{ ficha.data_retorno_previsto.strftime('%d/%m/%Y') }}
+                {% endif %}
+            </div>
+            {% if ficha.diagnostico %}
+            <div style="color:#D1D5DB;font-size:13px;margin-top:6px;">{{ ficha.diagnostico[:100] }}...</div>
+            {% endif %}
+        </div>
+        <div>
+            {% if ficha.status == 'em_tratamento' %}
+            <span style="background:rgba(239,68,68,0.2);color:#EF4444;padding:5px 12px;border-radius:12px;font-size:11px;font-weight:700;">🟡 Em tratamento</span>
+            {% else %}
+            <span style="background:rgba(16,185,129,0.2);color:#10B981;padding:5px 12px;border-radius:12px;font-size:11px;font-weight:700;">🟢 Recuperado</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-heartbeat fa-4x mb-3" style="color:rgba(255,255,255,0.05);"></i>
+    <p class="text-muted">Nenhuma ficha médica registrada para este atleta.</p>
+</div>
+{% endif %}
+{% endblock %}

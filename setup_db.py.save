@@ -1,0 +1,65 @@
+from app import app, db
+from models import User, Atleta, FichaMedica, Scouting
+from werkzeug.security import generate_password_hash
+from datetime import date
+
+with app.app_context():
+    db.create_all()
+    
+    admin = User(
+        username='admin',
+        email='admin@belenenses.com',
+        password=generate_password_hash('belenenses123'),
+        is_admin=True
+    )
+    db.session.add(admin)
+    
+    a1 = Atleta(nome='João Silva', data_nascimento=date(1998, 5, 15), posicao='Atacante', numero='9', categoria='Profissional', status='ativo')
+    a2 = Atleta(nome='Pedro Santos', data_nascimento=date(2000, 8, 22), posicao='Meia', numero='10', categoria='Profissional', status='ativo')
+    a3 = Atleta(nome='Rui Costa', data_nascimento=date(1995, 3, 10), posicao='Defensor', numero='4', categoria='Profissional', status='ativo')
+    db.session.add_all([a1, a2, a3])
+    
+    ficha = FichaMedica(
+        atleta_id=1,
+        tipo_lesao='Entorse tornozelo',
+        data_lesao=date(2026, 5, 1),
+        data_retorno_previsto=date(2026, 5, 20),
+        gravidade='leve',
+        medico_responsavel='Dr. Carlos',
+        diagnostico='Entorse grau 1',
+        tratamento='Gelo e fisioterapia',
+        status='em_tratamento'
+    )
+    db.session.add(ficha)
+    
+    scout = Scouting(
+        nome_jogador='Carlos Alberto',
+        clube_atual='Benfica B',
+        posicao='Volante',
+        data_nascimento=date(2002, 7, 12),
+        nacionalidade='Brasileiro',
+        altura=1.82,
+        peso=76,
+        pe_dominante='destro',
+        valor_estimado=500000,
+        nota_tecnica=8,
+        nota_fisica=7,
+        nota_tatica=8,
+        nota_mental=9,
+        partida_observada='Benfica B vs Porto B',
+        data_observacao=date(2026, 5, 10),
+        campeonato='Liga Revelação',
+        observador='João Oliveira',
+        pontos_fortes='Bom passe, visão de jogo',
+        pontos_fracos='Velocidade',
+        resumo='Jogador com potencial',
+        indicacao='aprovar',
+        status='ativo'
+    )
+    db.session.add(scout)
+    
+    db.session.commit()
+    print("✅ Banco criado com sucesso!")
+    print("👤 Login: admin | 🔒 Senha: belenenses123")
+
+

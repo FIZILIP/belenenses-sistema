@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .comissao-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 8px;
+    }
+    
+    .membro-card {
+        background: linear-gradient(145deg, #111827, #0F1117);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .membro-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0,51,160,0.25);
+        border-color: rgba(255,215,0,0.3);
+    }
+    
+    .membro-header {
+        background: linear-gradient(135deg, #0033A0 0%, #001a4d 100%);
+        padding: 24px 20px 20px;
+        text-align: center;
+        position: relative;
+    }
+    
+    .membro-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid #FFD700;
+        background: rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 36px;
+        color: #FFD700;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    
+    .membro-nome {
+        font-size: 18px;
+        font-weight: 700;
+        color: #FFFFFF;
+        margin-bottom: 4px;
+    }
+    
+    .membro-cargo {
+        display: inline-block;
+        background: rgba(255,215,0,0.2);
+        color: #FFD700;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .membro-body {
+        padding: 20px;
+    }
+    
+    .membro-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #9CA3AF;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    
+    .membro-info i {
+        width: 18px;
+        color: #0033A0;
+        font-size: 14px;
+        text-align: center;
+    }
+    
+    .membro-especialidade {
+        display: inline-block;
+        background: rgba(0,51,160,0.2);
+        color: #60A5FA;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-top: 8px;
+    }
+    
+    .membro-footer {
+        padding: 0 20px 20px;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-editar-membro {
+        flex: 1;
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s;
+        border: 1px solid rgba(255,215,0,0.3);
+        background: rgba(255,215,0,0.08);
+        color: #FFD700;
+    }
+    
+    .btn-editar-membro:hover {
+        background: rgba(255,215,0,0.15);
+        color: #FFD700;
+    }
+    
+    .btn-remover-membro {
+        flex: 1;
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+        border: 1px solid rgba(239,68,68,0.2);
+        background: rgba(239,68,68,0.08);
+        color: #EF4444;
+    }
+    
+    .btn-remover-membro:hover {
+        background: rgba(239,68,68,0.15);
+        color: #EF4444;
+    }
+    
+    /* Modal */
+    .modal-premium .modal-content {
+        background: linear-gradient(135deg, #111827 0%, #0F1117 100%);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 20px;
+    }
+    
+    .modal-premium .modal-header {
+        background: linear-gradient(135deg, #0033A0, #001a4d);
+        border-bottom: none;
+        border-radius: 20px 20px 0 0;
+        padding: 20px 24px;
+    }
+    
+    .modal-premium .form-control, .modal-premium .form-select {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        border-radius: 10px;
+        padding: 10px 14px;
+    }
+    
+    .modal-premium .form-control:focus, .modal-premium .form-select:focus {
+        border-color: #FFD700;
+        box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+        background: rgba(255,255,255,0.08);
+        color: white;
+    }
+    
+    .modal-premium .form-label {
+        color: #D1D5DB;
+        font-weight: 500;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+    
+    .modal-premium .form-control::placeholder {
+        color: #6B7280;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-white fw-bold mb-1">
+            <i class="fas fa-chalkboard-user me-2" style="color: #FFD700;"></i>Comissão Técnica
+        </h2>
+        <p class="text-muted mb-0" style="font-size: 14px;">{{ comissao|length }} membro(s) na equipe</p>
+    </div>
+    <button class="btn-add-membro" data-bs-toggle="modal" data-bs-target="#modalComissao">
+        <i class="fas fa-plus"></i> Novo Membro
+    </button>
+</div>
+
+<!-- GRID DE CARDS -->
+{% if comissao %}
+<div class="comissao-grid">
+    {% for membro in comissao %}
+    <div class="membro-card">
+                <div class="membro-header">
+            <div class="membro-avatar">
+                {% if membro.foto %}
+                <img src="{{ url_for('static', filename='uploads/comissao/' + membro.foto) }}" 
+                     style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #FFD700;">
+                {% else %}
+                <i class="fas fa-user-tie"></i>
+                {% endif %}
+            </div>
+            <div class="membro-nome">{{ membro.nome }}</div>
+            <span class="membro-cargo">{{ membro.cargo }}</span>
+        </div>
+        
+        <div class="membro-body">
+            {% if membro.especialidade %}
+            <span class="membro-especialidade">{{ membro.especialidade }}</span>
+            {% endif %}
+            
+            {% if membro.telefone %}
+            <div class="membro-info mt-3">
+                <i class="fas fa-phone"></i> {{ membro.telefone }}
+            </div>
+            {% endif %}
+            
+            {% if membro.email %}
+            <div class="membro-info">
+                <i class="fas fa-envelope"></i> {{ membro.email }}
+            </div>
+            {% endif %}
+            
+            {% if membro.data_contratacao %}
+            <div class="membro-info">
+                <i class="fas fa-calendar"></i> Desde {{ membro.data_contratacao.strftime('%d/%m/%Y') }}
+            </div>
+            {% endif %}
+        </div>
+        
+                        <div class="membro-footer">
+            <a href="{{ url_for('editar_comissao', id=membro.id) }}" class="btn-editar-membro">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{{ url_for('deletar_comissao', id=membro.id) }}" 
+               class="btn-remover-membro"
+               onclick="return confirm('Remover {{ membro.nome }} da comissão?')">
+                <i class="fas fa-trash"></i> Remover
+            </a>
+        </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-clipboard-list fa-5x mb-4" style="color: rgba(255,255,255,0.05);"></i>
+    <h4 class="text-white mb-2">Nenhum membro cadastrado</h4>
+    <p class="text-muted mb-4">Monte sua comissão técnica!</p>
+    <button class="btn-add-membro" data-bs-toggle="modal" data-bs-target="#modalComissao">
+        <i class="fas fa-plus"></i> Primeiro Membro
+    </button>
+</div>
+{% endif %}
+
+<!-- MODAL DE CADASTRO -->
+<div class="modal fade modal-premium" id="modalComissao" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-user-plus me-2" style="color: #FFD700;"></i>Adicionar Membro
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+                        <form method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Nome Completo <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control" required placeholder="Nome do profissional">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cargo <span class="text-danger">*</span></label>
+                        <select name="cargo" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <option>Treinador Principal</option>
+                            <option>Auxiliar Técnico</option>
+                            <option>Preparador Físico</option>
+                            <option>Treinador de Goleiros</option>
+                            <option>Fisioterapeuta</option>
+                            <option>Médico</option>
+                            <option>Massagista</option>
+                            <option>Diretor Esportivo</option>
+                            <option>Analista de Desempenho</option>
+                            <option>Nutricionista</option>
+                            <option>Psicólogo</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Especialidade</label>
+                        <input type="text" name="especialidade" class="form-control" placeholder="Ex: Fisiologia do Esporte">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Telefone</label>
+                        <input type="tel" name="telefone" class="form-control" placeholder="(XX) XXXXX-XXXX">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" placeholder="email@exemplo.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Data de Contratação</label>
+                        <input type="date" name="data_contratacao" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Foto</label>
+                        <input type="file" name="foto" accept="image/*" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-outline-premium" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-add-membro">
+                        <i class="fas fa-save"></i> Salvar Membro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

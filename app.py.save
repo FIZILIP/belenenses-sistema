@@ -1,0 +1,277 @@
+cat > app.py << 'from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from datetime import datetime, timedelta
+import os
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'belenenses2024'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///belenenses.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'static/uploads/atletas'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+from models import db, User, Atleta, ComissaoTecnica, Compra, GastoMensal, ContaFixa, Inventario, Reuniao, Evento
+
+db.init_app(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# ========== ROTAS PRINCIPAIS ==========
+@app.route('/')
+@login_required
+def index():
+    total_gastos_mes = GastoMensal.query.filter_by(mes=datetime.now().strftime('%Y-%m')).first()
+    total_gastos = total_gastos_mes.valor if total_gastos_mes else 0
+    num_atletas = Atleta.query.count()
+    num_reunioes = Reuniao.query.filter(Reuniao.data >= datetime.now().date()).count()
+    atletas_recentes = Atleta.query.order_by(Atleta.id.desc()).limit(5).all()
+    
+    return render_template('index.html', 
+                         total_gastos=total_gastos,
+                         num_atletas=num_atletas,
+                         num_reunioes=num_reunioes,
+                         atletas=atletas_recentes)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for('index'))
+        flash('Usuário ou senha inválidos')
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+# ========== ROTAS PARA USUÁRIOS - VERSÃO SIMPLIFICADA ==========
+@app.route('/usuarios')
+@login_required
+def usuarios():
+    if not current_user.is_admin:
+        flash('Acesso restrito a administradores!', 'error')
+        return redirect(url_for('index'))
+    
+    todos_usuarios = User.query.all()
+    return render_template('usuarios.html', usuarios=todos_usuarios)
+
+@app.route('/criar-usuario', methods=['POST'])
+@login_required
+def criar_usuario():
+    if not current_user.is_admin:
+        flash('Acesso negado!', 'error')
+        return redirect(url_for('usuarios'))
+    
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    is_admin = request.form.get('is_admin') == '1'
+    
+    if User.query.filter_by(username=username).first():
+        flash('Usuário já existe!', 'error')
+        return redirect(url_for('usuarios'))
+    
+    novo = User(
+        username=username,
+        email=email,
+        password=generate_password_hash(password),
+        is_admin=is_admin
+    )
+    db.session.add(novo)
+    db.session.commit()
+    
+    flash(f'Usuário {username} criado!', 'success')
+    return redirect(url_for('usuarios'))
+
+@app.route('/deletar-usuario/<int:id>')
+@login_required
+def deletar_usuario(id):
+    if not current_user.is_admin:
+        flash('Acesso negado!', 'error')
+        return redirect(url_for('usuarios'))
+    
+    if id == current_user.id:
+        flash('Não pode deletar seu próprio usuário!', 'error')
+        return redirect(url_for('usuarios'))
+    
+    usuario = User.query.get_or_404(id)
+    db.session.delete(usuario)
+    db.session.commit()
+    
+    flash(f'Usuário {usuario.username} removido!', 'success')
+    return redirect(url_for('usuarios'))
+
+# ========== ROTAS PARA ATLETAS ==========
+@app.route('/atletas', methods=['GET', 'POST'])
+@login_required
+def atletas():
+    if request.method == 'POST':
+        try:
+            nome = request.form.get('nome', '').strip()
+            if not nome:
+                flash('Nome é obrigatório!', 'error')
+                return redirect(url_for('atletas'))
+            
+            foto_path = None
+            if 'foto' in request.files:
+                foto = request.files['foto']
+                if foto and foto.filename and allowed_file(foto.filename):
+                    filename = secure_filename(f"{datetime.now().timestamp()}_{foto.filename}")
+                    foto.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    foto_path = filename
+            
+            atleta = Atleta(
+                nome=nome,
+                data_nascimento=datetime.strptime(request.form['data_nascimento'], '%Y-%m-%d').date() if request.form.get('data_nascimento') else datetime.now().date(),
+                posicao=request.form.get('posicao') or None,
+                numero=request.form.get('numero') or None,
+                altura=float(request.form['altura']) if request.form.get('altura') else None,
+                peso=float(request.form['peso']) if request.form.get('peso') else None,
+                telefone=request.form.get('telefone') or None,
+                email=request.form.get('email') or None,
+                endereco=request.form.get('endereco') or None,
+                categoria=request.form.get('categoria') or None,
+                foto=foto_path
+            )
+            db.session.add(atleta)
+            db.session.commit()
+            flash(f'Atleta {nome} cadastrado!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro: {str(e)}', 'error')
+        return redirect(url_for('atletas'))
+    
+    atletas_list = Atleta.query.all()
+    return render_template('atletas.html', atletas=atletas_list)
+
+@app.route('/atletas/deletar/<int:id>')
+@login_required
+def deletar_atleta(id):
+    atleta = Atleta.query.get_or_404(id)
+    nome = atleta.nome
+    if atleta.foto:
+        try:
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], atleta.foto))
+        except:
+            pass
+    db.session.delete(atleta)
+    db.session.commit()
+    flash(f'Atleta {nome} removido!', 'success')
+    return redirect(url_for('atletas'))
+
+# ========== ROTAS PARA COMISSÃO ==========
+@app.route('/comissao', methods=['GET', 'POST'])
+@login_required
+def comissao():
+    if request.method == 'POST':
+        try:
+            membro = ComissaoTecnica(
+                nome=request.form['nome'],
+                cargo=request.form['cargo'],
+                especialidade=request.form.get('especialidade', ''),
+                telefone=request.form.get('telefone', ''),
+                email=request.form.get('email', ''),
+                data_contratacao=datetime.strptime(request.form['data_contratacao'], '%Y-%m-%d').date() if request.form.get('data_contratacao') else datetime.now().date()
+            )
+            db.session.add(membro)
+            db.session.commit()
+            flash(f'Membro {membro.nome} cadastrado!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro: {str(e)}', 'error')
+        return redirect(url_for('comissao'))
+    
+    comissao_list = ComissaoTecnica.query.all()
+    return render_template('comissao.html', comissao=comissao_list)
+
+@app.route('/comissao/deletar/<int:id>')
+@login_required
+def deletar_comissao(id):
+    membro = ComissaoTecnica.query.get_or_404(id)
+    nome = membro.nome
+    db.session.delete(membro)
+    db.session.commit()
+    flash(f'Membro {nome} removido!', 'success')
+    return redirect(url_for('comissao'))
+
+# ========== DEMAIS ROTAS ==========
+@app.route('/compras')
+@login_required
+def compras():
+    return render_template('compras.html', title="Compras", icon="shopping-cart")
+
+@app.route('/gastos')
+@login_required
+def gastos():
+    return render_template('gastos.html', title="Gastos", icon="chart-line")
+
+@app.route('/contas_fixas')
+@login_required
+def contas_fixas():
+    return render_template('contas_fixas.html', title="Contas Fixas", icon="file-invoice")
+
+@app.route('/inventario')
+@login_required
+def inventario():
+    return render_template('inventario.html', title="Inventário", icon="boxes")
+
+@app.route('/reunioes')
+@login_required
+def reunioes():
+    return render_template('reunioes.html', title="Reuniões", icon="calendar-alt")
+
+@app.route('/calendario')
+@login_required
+def calendario():
+    return render_template('calendario.html', title="Calendário", icon="calendar-week")
+
+# ========== CRIAR ADMIN ==========
+def create_admin():
+    with app.app_context():
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            admin = User(
+                username='admin',
+                email='admin@belenenses.com',
+                password=generate_password_hash('belenenses123'),
+                is_admin=True
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Usuário admin criado!")
+
+# ========== INICIAR APP ==========
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        create_admin()
+    print("\n" + "=" * 50)
+    print("🚀 SERVIDOR INICIADO!")
+    print("📍 Acesse: http://127.0.0.1:5002")
+    print("👤 Login: admin")
+    print("🔒 Senha: belenenses123")
+    print("=" * 50 + "\n")
+    app.run(debug=True, port=5002, host='0.0.0.0')
+EOF

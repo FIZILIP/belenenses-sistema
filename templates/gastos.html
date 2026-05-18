@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .gastos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+        margin-top: 8px;
+    }
+    
+    .gasto-card {
+        background: linear-gradient(145deg, #111827, #0F1117);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .gasto-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0,51,160,0.25);
+        border-color: rgba(255,215,0,0.3);
+    }
+    
+    .gasto-header {
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .gasto-icone {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    
+    .icone-salario { background: rgba(16,185,129,0.15); color: #10B981; }
+    .icone-infra { background: rgba(59,130,246,0.15); color: #3B82F6; }
+    .icone-viagem { background: rgba(139,92,246,0.15); color: #8B5CF6; }
+    .icone-equip { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .icone-marketing { background: rgba(236,72,153,0.15); color: #EC4899; }
+    .icone-padrao { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    
+    .gasto-mes {
+        font-size: 13px;
+        color: #9CA3AF;
+    }
+    
+    .gasto-categoria {
+        font-size: 16px;
+        font-weight: 700;
+        color: #FFFFFF;
+    }
+    
+    .gasto-valor {
+        margin-left: auto;
+        font-size: 24px;
+        font-weight: 900;
+        color: #EF4444;
+    }
+    
+    .gasto-body {
+        padding: 20px;
+    }
+    
+    .gasto-linha {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: #9CA3AF;
+        margin-bottom: 8px;
+    }
+    
+    .gasto-linha i {
+        width: 18px;
+        color: #0033A0;
+        font-size: 13px;
+        text-align: center;
+    }
+    
+    .gasto-descricao {
+        color: #D1D5DB;
+        font-size: 13px;
+        line-height: 1.5;
+        margin-top: 8px;
+        padding: 10px;
+        background: rgba(255,255,255,0.02);
+        border-radius: 10px;
+        border-left: 2px solid rgba(255,215,0,0.2);
+    }
+    
+    .gasto-footer {
+        padding: 0 20px 20px;
+    }
+    
+    .btn-remover-gasto {
+        width: 100%;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(239,68,68,0.2);
+        background: rgba(239,68,68,0.08);
+        color: #EF4444;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .btn-remover-gasto:hover {
+        background: rgba(239,68,68,0.15);
+        color: #EF4444;
+    }
+    
+    .btn-add-gasto {
+        background: linear-gradient(135deg, #0033A0, #FFD700);
+        border: none;
+        padding: 12px 28px;
+        border-radius: 14px;
+        font-weight: 700;
+        color: white;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    
+    .btn-add-gasto:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,51,160,0.4);
+        color: white;
+    }
+    
+    .btn-salvar-gasto {
+        background: linear-gradient(135deg, #0033A0, #FFD700);
+        border: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        transition: all 0.3s;
+    }
+    
+    .btn-salvar-gasto:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,51,160,0.4);
+    }
+    
+    .total-gasto-banner {
+        background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(0,0,0,0.2));
+        border: 1px solid rgba(239,68,68,0.25);
+        border-radius: 16px;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+    
+    .total-gasto-valor {
+        font-size: 28px;
+        font-weight: 900;
+        color: #EF4444;
+    }
+    
+    .total-gasto-label {
+        font-size: 13px;
+        color: #9CA3AF;
+    }
+    
+    .mes-badge {
+        display: inline-block;
+        background: rgba(0,51,160,0.3);
+        color: #60A5FA;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+{% set total_geral = namespace(valor=0) %}
+{% for gasto in gastos %}
+    {% set total_geral.valor = total_geral.valor + (gasto.valor or 0) %}
+{% endfor %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-white fw-bold mb-1">
+            <i class="fas fa-chart-line me-2" style="color: #FFD700;"></i>Gastos Mensais
+        </h2>
+        <p class="text-muted mb-0" style="font-size: 14px;">{{ gastos|length }} gasto(s) registrado(s)</p>
+    </div>
+    <button class="btn-add-gasto" data-bs-toggle="modal" data-bs-target="#modalGasto">
+        <i class="fas fa-plus"></i> Novo Gasto
+    </button>
+</div>
+
+<!-- TOTAL GERAL -->
+{% if gastos %}
+<div class="total-gasto-banner">
+    <div>
+        <div class="total-gasto-label">TOTAL GERAL EM GASTOS</div>
+        <div class="total-gasto-valor">€ {{ "%.2f"|format(total_geral.valor) }}</div>
+    </div>
+    <i class="fas fa-arrow-trend-down fa-2x" style="color: rgba(239,68,68,0.3);"></i>
+</div>
+{% endif %}
+
+<!-- GRID DE CARDS -->
+{% if gastos %}
+<div class="gastos-grid">
+    {% for gasto in gastos %}
+    <!-- Define o ícone baseado na categoria -->
+    {% set icone_classe = 'icone-padrao' %}
+    {% set icone_fa = 'fa-file-invoice' %}
+    {% if 'salário' in gasto.categoria|lower or 'salario' in gasto.categoria|lower %}
+        {% set icone_classe = 'icone-salario' %}
+        {% set icone_fa = 'fa-money-bill-wave' %}
+    {% elif 'infra' in gasto.categoria|lower %}
+        {% set icone_classe = 'icone-infra' %}
+        {% set icone_fa = 'fa-building' %}
+    {% elif 'viagem' in gasto.categoria|lower %}
+        {% set icone_classe = 'icone-viagem' %}
+        {% set icone_fa = 'fa-plane' %}
+    {% elif 'equip' in gasto.categoria|lower %}
+        {% set icone_classe = 'icone-equip' %}
+        {% set icone_fa = 'fa-tools' %}
+    {% elif 'market' in gasto.categoria|lower %}
+        {% set icone_classe = 'icone-marketing' %}
+        {% set icone_fa = 'fa-bullhorn' %}
+    {% endif %}
+    
+    <div class="gasto-card">
+        <div class="gasto-header">
+            <div class="gasto-icone {{ icone_classe }}">
+                <i class="fas {{ icone_fa }}"></i>
+            </div>
+            <div>
+                <div class="gasto-categoria">{{ gasto.categoria }}</div>
+                <span class="mes-badge">{{ gasto.mes }}</span>
+            </div>
+            <div class="gasto-valor">€ {{ "%.2f"|format(gasto.valor) }}</div>
+        </div>
+        
+        <div class="gasto-body">
+            {% if gasto.data_pagamento %}
+            <div class="gasto-linha">
+                <i class="fas fa-calendar-check"></i>
+                <span>Pago em {{ gasto.data_pagamento.strftime('%d/%m/%Y') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if gasto.descricao %}
+            <div class="gasto-descricao">{{ gasto.descricao }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="gasto-footer">
+            <a href="{{ url_for('deletar_gasto', id=gasto.id) }}" 
+               class="btn-remover-gasto"
+               onclick="return confirm('Remover este gasto?')">
+                <i class="fas fa-trash"></i> Remover
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-chart-line fa-5x mb-4" style="color: rgba(255,255,255,0.05);"></i>
+    <h4 class="text-white mb-2">Nenhum gasto registrado</h4>
+    <p class="text-muted mb-4">Registre os gastos mensais do clube.</p>
+    <button class="btn-add-gasto" data-bs-toggle="modal" data-bs-target="#modalGasto">
+        <i class="fas fa-plus"></i> Primeiro Gasto
+    </button>
+</div>
+{% endif %}
+
+<!-- MODAL: Novo Gasto -->
+<div class="modal fade modal-premium" id="modalGasto" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0033A0, #001a4d); border-bottom: none; border-radius: 20px 20px 0 0; padding: 20px 24px;">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-file-invoice-dollar me-2" style="color: #FFD700;"></i>Registrar Gasto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('gastos') }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Mês/Ano <span class="text-danger">*</span></label>
+                        <input type="month" name="mes" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoria <span class="text-danger">*</span></label>
+                        <select name="categoria" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <option>Salários</option>
+                            <option>Infraestrutura</option>
+                            <option>Viagens</option>
+                            <option>Equipamentos</option>
+                            <option>Marketing</option>
+                            <option>Alimentação</option>
+                            <option>Transporte</option>
+                            <option>Saúde</option>
+                            <option>Outros</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor (€) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" name="valor" class="form-control" required placeholder="0,00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descrição</label>
+                        <textarea name="descricao" class="form-control" rows="2" placeholder="Detalhes do gasto..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Data do Pagamento</label>
+                        <input type="date" name="data_pagamento" class="form-control">
+                    </div>
+                    <input type="hidden" name="comprovante" value="">
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-outline-premium" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-salvar-gasto">
+                        <i class="fas fa-save"></i> Salvar Gasto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
