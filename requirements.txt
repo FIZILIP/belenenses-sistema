@@ -25,3 +25,4 @@ SQLAlchemy==2.0.49
 typing_extensions==4.15.0
 Werkzeug==2.3.7
 psycopg2-binary
+supabase

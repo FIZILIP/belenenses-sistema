@@ -257,8 +257,7 @@
                 {{ atleta.categoria or '' }}
             </div>
             {% if atleta.foto %}
-                <img src="{{ url_for('static', filename='uploads/atletas/' + atleta.foto) }}" class="foto-atleta" alt="{{ atleta.nome }}">
-            {% else %}
+                <img src="https://qkkjwiyxsiununimsipp.supabase.co/storage/v1/object/public/atletas/{{ atleta.foto }}" class="foto-atleta" alt="{{ atleta.nome }}">
                 <div class="foto-placeholder">
                     <i class="fas fa-user"></i>
                 </div>

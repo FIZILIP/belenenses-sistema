@@ -341,7 +341,8 @@
         {% for atleta in atletas %}
         <div class="atleta-mini">
             {% if atleta.foto %}
-            <img src="{{ url_for('static', filename='uploads/atletas/' + atleta.foto) }}" class="atleta-mini-avatar">
+            <img src="https://qkkjwiyxsiununimsipp.supabase.co/storage/v1/object/public/atletas/{{ atleta.foto }}"
+                 class="atleta-mini-avatar" alt="{{ atleta.nome }}">
             {% else %}
             <div class="atleta-mini-avatar" style="display:flex;align-items:center;justify-content:center;color:#FFD700;">
                 <i class="fas fa-user"></i>

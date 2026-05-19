@@ -6,6 +6,11 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from flask import send_file
 import os
+from supabase import create_client, Client
+
+SUPABASE_URL = "https://qkkjwiyxsiununimsipp.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFra2p3aXl4c2l1bnVuaW1zaXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NTg2NDAsImV4cCI6MjA2MzIzNDY0MH0.S0lE6T8z9zQDrCG7QysHDwFy7l9Z5wZF8mHVt7sBzHU"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'belenenses2024'
@@ -165,7 +170,12 @@ def atletas():
                 foto = request.files['foto']
                 if foto and foto.filename and allowed_file(foto.filename):
                     filename = secure_filename(f"{datetime.now().timestamp()}_{foto.filename}")
-                    foto.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    # Upload para Supabase Storage
+                    supabase.storage.from_("atletas").upload(
+                        filename,
+                        foto.read(),
+                        {"content-type": foto.content_type}
+                    )
                     foto_path = filename
             
             atleta = Atleta(
@@ -214,14 +224,14 @@ def editar_atleta(id):
             if 'foto' in request.files:
                 foto = request.files['foto']
                 if foto and foto.filename and allowed_file(foto.filename):
-                    if atleta.foto:
-                        try:
-                            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], atleta.foto))
-                        except:
-                            pass
                     filename = secure_filename(f"{datetime.now().timestamp()}_{foto.filename}")
-                    foto.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    atleta.foto = filename
+                    # Upload para Supabase Storage
+                    supabase.storage.from_("atletas").upload(
+                        filename,
+                        foto.read(),
+                        {"content-type": foto.content_type}
+                    )
+                    foto_path = filename
             
             db.session.commit()
             flash(f'Atleta {atleta.nome} atualizado!', 'success')
