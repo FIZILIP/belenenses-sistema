@@ -5,35 +5,30 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from flask import send_file
-
 import os
+import shutil
+import atexit
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'connect_args': {'check_same_thread': False}}
 app.config['SECRET_KEY'] = 'belenenses2024'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/belenenses.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///belenenses.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER_COMISSAO'] = 'static/uploads/comissao'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/atletas'
+app.config['UPLOAD_FOLDER_COMISSAO'] = 'static/uploads/comissao'
 app.config['UPLOAD_FOLDER_DOCS'] = 'static/uploads/documentos'
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER_COMISSAO'], exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER_DOCS'], exist_ok=True)
 
 from models import db, User, Atleta, ComissaoTecnica, Compra, GastoMensal, ContaFixa, Inventario, Reuniao, Evento, FichaMedica, Scouting, Patrocinio, Documento
-import shutil
-if os.path.exists('instance/belenenses_backup.db'):
-    shutil.copy('instance/belenenses_backup.db', '/tmp/belenenses.db')
+
 db.init_app(app)
-# Salvar backup após cada alteração
-import atexit
-def backup_db():
-    if os.path.exists('/tmp/belenenses.db'):
-        os.makedirs('instance', exist_ok=True)
-        shutil.copy('/tmp/belenenses.db', 'instance/belenenses_backup.db')
-atexit.register(backup_db)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
@@ -811,7 +806,10 @@ def deletar_documento(id):
     flash('Documento removido!', 'success')
     return redirect(url_for('documentos'))
 
+with app.app_context():
+    db.create_all()
+    create_admin()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        create_admin()
+    port = int(os.environ.get("PORT", 5002))
+    app.run(debug=False, host='0.0.0.0', port=port)
