@@ -258,6 +258,7 @@
             </div>
             {% if atleta.foto %}
                 <img src="https://qkkjwiyxsiununimsipp.supabase.co/storage/v1/object/public/atletas/{{ atleta.foto }}" class="foto-atleta" alt="{{ atleta.nome }}">
+            {% else %}
                 <div class="foto-placeholder">
                     <i class="fas fa-user"></i>
                 </div>
