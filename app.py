@@ -811,11 +811,3 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_admin()
-    port = int(os.environ.get("PORT", 5002))
-    app.run(debug=False, host='0.0.0.0', port=port)
-    print("\n" + "=" * 50)
-    print("🚀 SERVIDOR INICIADO!")
-    print("📍 Acesse: http://127.0.0.1:5002")
-    print("👤 Login: admin")
-    print("🔒 Senha: belenenses123")
-    print("=" * 50 + "\n")
