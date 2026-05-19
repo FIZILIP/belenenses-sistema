@@ -43,7 +43,7 @@
         right: 20px;
         font-size: 72px;
         font-weight: 900;
-        color: rgba(255,255,255,0.08);
+        color: rgba(174, 190, 200, 0.08);
         line-height: 1;
     }
     
@@ -309,6 +309,30 @@
             </div>
             {% endif %}
             
+            {% if atleta.salario %}
+            <div class="info-linha">
+                <i class="fas fa-euro-sign"></i> € {{ "%.2f"|format(atleta.salario) }}
+            </div>
+            {% endif %}
+            
+            {% if atleta.premios %}
+            <div class="info-linha">
+                <i class="fas fa-trophy"></i> Prémios: € {{ "%.2f"|format(atleta.premios) }}
+            </div>
+            {% endif %}
+            
+            {% if atleta.contrato_inicio %}
+            <div class="info-linha">
+                <i class="fas fa-file-signature"></i> Início: {{ atleta.contrato_inicio.strftime('%d/%m/%Y') }}
+            </div>
+            {% endif %}
+            
+            {% if atleta.contrato_fim %}
+            <div class="info-linha">
+                <i class="fas fa-calendar-times"></i> Fim: {{ atleta.contrato_fim.strftime('%d/%m/%Y') }}
+            </div>
+            {% endif %}
+
             {% if atleta.salario %}
             <div class="info-linha">
                 <i class="fas fa-euro-sign"></i> € {{ "%.2f"|format(atleta.salario) }}

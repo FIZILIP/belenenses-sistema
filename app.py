@@ -811,6 +811,7 @@ def deletar_documento(id):
     flash('Documento removido!', 'success')
     return redirect(url_for('documentos'))
 
+# Criar tabelas ao iniciar
 with app.app_context():
     db.create_all()
     create_admin()
