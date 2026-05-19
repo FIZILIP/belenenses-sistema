@@ -499,7 +499,18 @@ def reunioes():
             )
             db.session.add(reuniao)
             db.session.commit()
-            flash('Reunião agendada!', 'success')
+            
+            # Criar também no calendário
+            evento = Evento(
+                titulo=request.form['titulo'],
+                data=datetime.strptime(request.form['data'], '%Y-%m-%d').date(),
+                tipo='Reunião',
+                descricao=request.form.get('pauta', '')
+            )
+            db.session.add(evento)
+            db.session.commit()
+            
+            flash('Reunião agendada e adicionada ao calendário!', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Erro: {str(e)}', 'error')
@@ -513,6 +524,16 @@ def reunioes():
 def concluir_reuniao(id):
     reuniao = Reuniao.query.get_or_404(id)
     reuniao.status = 'concluída'
+    
+    # Atualizar o evento no calendário
+    evento = Evento.query.filter_by(
+        titulo=reuniao.titulo,
+        data=reuniao.data,
+        tipo='Reunião'
+    ).first()
+    if evento:
+        evento.descricao = '✅ CONCLUÍDA - ' + (evento.descricao or '')
+    
     db.session.commit()
     flash('Reunião concluída!', 'success')
     return redirect(url_for('reunioes'))
@@ -521,9 +542,19 @@ def concluir_reuniao(id):
 @login_required
 def deletar_reuniao(id):
     reuniao = Reuniao.query.get_or_404(id)
+    
+    # Remover também do calendário
+    evento = Evento.query.filter_by(
+        titulo=reuniao.titulo,
+        data=reuniao.data,
+        tipo='Reunião'
+    ).first()
+    if evento:
+        db.session.delete(evento)
+    
     db.session.delete(reuniao)
     db.session.commit()
-    flash('Reunião removida!', 'success')
+    flash('Reunião removida do calendário!', 'success')
     return redirect(url_for('reunioes'))
 
 # ==================== ROTAS PARA CALENDÁRIO ====================
