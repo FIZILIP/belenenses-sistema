@@ -43,7 +43,7 @@
         right: 20px;
         font-size: 72px;
         font-weight: 900;
-        color: rgba(232, 247, 246, 0.08);
+        color: rgba(232, 241, 241, 0.70);
         line-height: 1;
     }
     
@@ -265,7 +265,14 @@
         <!-- Informações -->
         <div class="card-body-info">
             <span class="categoria-tag">{{ atleta.categoria or 'Sem categoria' }}</span>
-            <div class="nome-atleta">{{ atleta.nome }}</div>
+            <div class="nome-atleta">
+                {% set nomes = atleta.nome.split() %}
+                {% if nomes|length > 2 %}
+                    {{ nomes[0] }} {{ nomes[-1] }}
+                {% else %}
+                    {{ atleta.nome }}
+                {% endif %}
+            </div>
             <span class="posicao-badge">{{ atleta.posicao or 'Sem posição' }}</span>
                         
             {% set tem_lesao = namespace(existe=false) %}
