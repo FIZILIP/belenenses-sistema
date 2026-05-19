@@ -11,10 +11,7 @@ import os
 app = Flask(__name__)
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'connect_args': {'check_same_thread': False}}
 app.config['SECRET_KEY'] = 'belenenses2024'
-database_url = os.environ.get('DATABASE_URL')
-if database_url and database_url.startswith('postgres://'):
-    database_url = database_url.replace('postgres://', 'postgresql://', 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///belenenses.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/belenenses.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER_COMISSAO'] = 'static/uploads/comissao'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/atletas'
@@ -26,10 +23,17 @@ os.makedirs(app.config['UPLOAD_FOLDER_COMISSAO'], exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER_DOCS'], exist_ok=True)
 
 from models import db, User, Atleta, ComissaoTecnica, Compra, GastoMensal, ContaFixa, Inventario, Reuniao, Evento, FichaMedica, Scouting, Patrocinio, Documento
+import shutil
+if os.path.exists('instance/belenenses_backup.db'):
+    shutil.copy('instance/belenenses_backup.db', '/tmp/belenenses.db')
 db.init_app(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
+# Salvar backup após cada alteração
+import atexit
+def backup_db():
+    if os.path.exists('/tmp/belenenses.db'):
+        os.makedirs('instance', exist_ok=True)
+        shutil.copy('/tmp/belenenses.db', 'instance/belenenses_backup.db')
+atexit.register(backup_db)
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
