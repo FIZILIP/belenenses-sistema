@@ -253,6 +253,7 @@
         <!-- Header com foto -->
         <div class="card-header-img">
             <div class="numero-camisa">#{{ atleta.numero or '?' }}</div>
+            <span style="position: absolute; top: 85px; right: 20px; background: rgba(255,255,255,0.15); color: #FFFFFF; padding: 2px 10px; border-radius: 8px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;">PROFISSIONAL</span>
             {% if atleta.foto %}
                 <img src="{{ url_for('static', filename='uploads/atletas/' + atleta.foto) }}" class="foto-atleta" alt="{{ atleta.nome }}">
             {% else %}
@@ -265,13 +266,9 @@
         <!-- Informações -->
         <div class="card-body-info">
             <span class="categoria-tag">{{ atleta.categoria or 'Sem categoria' }}</span>
-            <div class="nome-atleta">
+            <div class="nome-atleta" style="font-size: 18px;">
                 {% set nomes = atleta.nome.split() %}
-                {% if nomes|length > 2 %}
-                    {{ nomes[0] }} {{ nomes[-1] }}
-                {% else %}
-                    {{ atleta.nome }}
-                {% endif %}
+                {{ nomes[0] }} {{ nomes[-1] if nomes|length > 1 else '' }}
             </div>
             <span class="posicao-badge">{{ atleta.posicao or 'Sem posição' }}</span>
                         
