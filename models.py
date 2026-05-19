@@ -26,9 +26,11 @@ class Atleta(db.Model):
     email = db.Column(db.String(100))
     endereco = db.Column(db.String(200))
     categoria = db.Column(db.String(50))
+    salario = db.Column(db.Float)
+    premios = db.Column(db.Float)
+    contrato_inicio = db.Column(db.Date)
+    contrato_fim = db.Column(db.Date)
     foto = db.Column(db.String(200))
-    status = db.Column(db.String(20), default='ativo')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class ComissaoTecnica(db.Model):
     id = db.Column(db.Integer, primary_key=True)
