@@ -198,7 +198,12 @@ def editar_atleta(id):
             atleta.telefone = request.form.get('telefone') or None
             atleta.email = request.form.get('email') or None
             atleta.categoria = request.form.get('categoria') or None
-            
+            atleta.endereco = request.form.get('endereco') or None
+            atleta.salario = float(request.form.get('salario') or 0)
+            atleta.premios = float(request.form.get('premios') or 0)
+            atleta.contrato_inicio = datetime.strptime(request.form.get('contrato_inicio'), '%Y-%m-%d').date() if request.form.get('contrato_inicio') else None
+            atleta.contrato_fim = datetime.strptime(request.form.get('contrato_fim'), '%Y-%m-%d').date() if request.form.get('contrato_fim') else None
+
             if 'foto' in request.files:
                 foto = request.files['foto']
                 if foto and foto.filename and allowed_file(foto.filename):
