@@ -11,7 +11,10 @@ import os
 app = Flask(__name__)
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'connect_args': {'check_same_thread': False}}
 app.config['SECRET_KEY'] = 'belenenses2024'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///belenenses.db'
+database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///belenenses.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER_COMISSAO'] = 'static/uploads/comissao'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/atletas'
