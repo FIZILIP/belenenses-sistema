@@ -557,6 +557,24 @@ def deletar_reuniao(id):
     flash('Reunião removida do calendário!', 'success')
     return redirect(url_for('reunioes'))
 
+@app.route('/reunioes/editar/<int:id>', methods=['POST'])
+@login_required
+def editar_reuniao(id):
+    reuniao = Reuniao.query.get_or_404(id)
+    try:
+        reuniao.titulo = request.form['titulo']
+        reuniao.data = datetime.strptime(request.form['data'], '%Y-%m-%d').date()
+        reuniao.hora = request.form['hora']
+        reuniao.local = request.form.get('local', '')
+        reuniao.pauta = request.form['pauta']
+        reuniao.participantes = request.form.get('participantes', '')
+        db.session.commit()
+        flash('Reunião atualizada!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro: {str(e)}', 'error')
+    return redirect(url_for('reunioes'))
+
 # ==================== ROTAS PARA CALENDÁRIO ====================
 @app.route('/calendario')
 @login_required
