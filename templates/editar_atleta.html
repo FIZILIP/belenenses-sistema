@@ -46,13 +46,16 @@
                             <label class="form-label">Posição</label>
                             <select name="posicao" class="form-control">
                                 <option value="">Selecione</option>
-                                <option value="Goleiro" {% if atleta.posicao == 'Goleiro' %}selected{% endif %}>Goleiro</option>
-                                <option value="Zagueiro" {% if atleta.posicao == 'Zagueiro' %}selected{% endif %}>Zagueiro</option>
+                                <option value="Guarda-Redes" {% if atleta.posicao == 'Guarda-Redes' %}selected{% endif %}>Guarda-Redes</option>
+                                <option value="Central" {% if atleta.posicao == 'Central' %}selected{% endif %}>Central</option>
                                 <option value="Lateral Direito" {% if atleta.posicao == 'Lateral Direito' %}selected{% endif %}>Lateral Direito</option>
                                 <option value="Lateral Esquerdo" {% if atleta.posicao == 'Lateral Esquerdo' %}selected{% endif %}>Lateral Esquerdo</option>
-                                <option value="Volante" {% if atleta.posicao == 'Volante' %}selected{% endif %}>Volante</option>
-                                <option value="Meio-campo" {% if atleta.posicao == 'Meio-campo' %}selected{% endif %}>Meio-campo</option>
-                                <option value="Atacante" {% if atleta.posicao == 'Atacante' %}selected{% endif %}>Atacante</option>
+                                <option value="Médio Central" {% if atleta.posicao == 'Médio Central' %}selected{% endif %}>Médio Central</option>
+                                <option value="Médio Defensivo" {% if atleta.posicao == 'Médio Defensivo' %}selected{% endif %}>Médio Defensivo</option>
+                                <option value="Médio Ofensivo" {% if atleta.posicao == 'Médio Ofensivo' %}selected{% endif %}>Médio Ofensivo</option>
+                                <option value="Extremo Direito" {% if atleta.posicao == 'Extremo Direito' %}selected{% endif %}>Extremo Direito</option>
+                                <option value="Extremo Esquerdo" {% if atleta.posicao == 'Extremo Esquerdo' %}selected{% endif %}>Extremo Esquerdo</option>
+                                <option value="Ponta de Lança" {% if atleta.posicao == 'Ponta de Lança' %}selected{% endif %}>Ponta de Lança</option>
                             </select>
                         </div>
                         
