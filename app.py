@@ -231,7 +231,7 @@ def editar_atleta(id):
                         foto.read(),
                         {"content-type": foto.content_type}
                     )
-                    foto_path = filename
+                    atleta.foto = filename
             
             db.session.commit()
             flash(f'Atleta {atleta.nome} atualizado!', 'success')
