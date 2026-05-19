@@ -819,4 +819,3 @@ if __name__ == '__main__':
     print("👤 Login: admin")
     print("🔒 Senha: belenenses123")
     print("=" * 50 + "\n")
-    app.run(debug=True, port=5002, host='0.0.0.0')
