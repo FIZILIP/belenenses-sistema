@@ -104,6 +104,30 @@
                             <textarea name="endereco" class="form-control" rows="2">{{ atleta.endereco or '' }}</textarea>
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Salário (€)</label>
+                            <input type="number" step="0.01" name="salario" class="form-control" value="{{ atleta.salario or 0 }}" placeholder="0,00">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Prémios (€)</label>
+                            <input type="number" step="0.01" name="premios" class="form-control" value="{{ atleta.premios or 0 }}" placeholder="0,00">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Início Contrato</label>
+                            <input type="date" name="contrato_inicio" class="form-control" value="{{ atleta.contrato_inicio.strftime('%Y-%m-%d') if atleta.contrato_inicio else '' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Fim Contrato</label>
+                            <input type="date" name="contrato_fim" class="form-control" value="{{ atleta.contrato_fim.strftime('%Y-%m-%d') if atleta.contrato_fim else '' }}">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
