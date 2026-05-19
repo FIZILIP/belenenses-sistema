@@ -407,7 +407,7 @@
             <a href="{{ url_for('atletas') }}" class="nav-link-custom"> <i class="fas fa-users"></i> Atletas </a>
         </div>
         <div class="nav-item">
-            <a href="{{ url_for('comissao') }}" class="nav-link-custom"> <i class="fas fa-chalkboard-user"></i> Comissão Técnica </a>
+            <a href="{{ url_for('comissao') }}" class="nav-link-custom"> <i class="fas fa-chalkboard-user"></i> Equipa Técnica </a>
         </div>
                    <div class="nav-item">
             <a href="{{ url_for('departamento_medico') }}" class="nav-link-custom {% if request.endpoint == 'departamento_medico' %}active{% endif %}">
@@ -436,6 +436,16 @@
         </div>
         <div class="nav-item">
             <a href="{{ url_for('calendario') }}" class="nav-link-custom"> <i class="fas fa-calendar-week"></i> Calendário </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('documentos') }}" class="nav-link-custom {% if request.endpoint == 'documentos' %}active{% endif %}">
+                <i class="fas fa-folder-open"></i> Documentos
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('patrocinios') }}" class="nav-link-custom {% if request.endpoint == 'patrocinios' %}active{% endif %}">
+                <i class="fas fa-hand-holding-usd"></i> Patrocínios
+            </a>
         </div>
         {% if current_user.is_admin %}
         <div class="nav-item">

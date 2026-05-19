@@ -139,3 +139,23 @@ class Scouting(db.Model):
     video_url = db.Column(db.String(200))
     status = db.Column(db.String(20), default='ativo')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+class Patrocinio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome_patrocinador = db.Column(db.String(100), nullable=False)
+    valor_aporte = db.Column(db.Float, nullable=False)
+    data_inicio = db.Column(db.Date)
+    data_fim = db.Column(db.Date)
+    tipo = db.Column(db.String(50))  # Financeiro, Material, Serviços
+    descricao = db.Column(db.Text)
+    contato = db.Column(db.String(100))
+    status = db.Column(db.String(20), default='ativo')  # ativo, encerrado, pendente
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Documento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(200), nullable=False)
+    categoria = db.Column(db.String(50), nullable=False)  # Contratos, Fichas de Inscrição, Comprovativos de Pagamento, Sumários, Facturas
+    arquivo = db.Column(db.String(300), nullable=False)
+    descricao = db.Column(db.Text)
+    data_upload = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_by = db.Column(db.String(80))

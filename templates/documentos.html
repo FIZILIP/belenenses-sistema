@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .filtro-categorias {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+    
+    .filtro-btn {
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.03);
+        color: #9CA3AF;
+    }
+    
+    .filtro-btn:hover, .filtro-btn.active {
+        background: rgba(255,215,0,0.1);
+        border-color: #FFD700;
+        color: #FFD700;
+    }
+    
+    .docs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+    
+    .doc-card {
+        background: linear-gradient(145deg, #111827, #0F1117);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        padding: 20px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    
+    .doc-card:hover {
+        border-color: rgba(255,215,0,0.3);
+        transform: translateY(-3px);
+    }
+    
+    .doc-icone {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    
+    .icone-contrato { background: rgba(59,130,246,0.15); color: #3B82F6; }
+    .icone-ficha { background: rgba(16,185,129,0.15); color: #10B981; }
+    .icone-pagamento { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .icone-sumario { background: rgba(139,92,246,0.15); color: #8B5CF6; }
+    .icone-factura { background: rgba(236,72,153,0.15); color: #EC4899; }
+    
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-nome { font-weight: 600; color: #FFF; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-categoria { font-size: 11px; color: #6B7280; }
+    .doc-data { font-size: 10px; color: #4B5563; }
+    
+    .doc-actions { display: flex; gap: 6px; }
+    .btn-doc {
+        width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+        text-decoration: none; transition: all 0.2s; font-size: 14px;
+    }
+    .btn-download { background: rgba(59,130,246,0.1); color: #3B82F6; border: 1px solid rgba(59,130,246,0.2); }
+    .btn-download:hover { background: rgba(59,130,246,0.2); }
+    .btn-delete { background: rgba(239,68,68,0.1); color: #EF4444; border: 1px solid rgba(239,68,68,0.2); }
+    .btn-delete:hover { background: rgba(239,68,68,0.2); }
+    
+    .btn-add-doc {
+        background: linear-gradient(135deg, #0033A0, #FFD700);
+        border: none; padding: 12px 28px; border-radius: 14px; font-weight: 700; color: white;
+        cursor: pointer; font-size: 14px; transition: all 0.3s;
+    }
+    .btn-add-doc:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,51,160,0.4); }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-white fw-bold mb-1">
+            <i class="fas fa-folder-open me-2" style="color: #FFD700;"></i>Documentos
+        </h2>
+        <p class="text-muted mb-0" style="font-size: 14px;">{{ documentos|length }} documento(s)</p>
+    </div>
+    <button class="btn-add-doc" data-bs-toggle="modal" data-bs-target="#modalDocumento">
+        <i class="fas fa-upload"></i> Carregar Documento
+    </button>
+</div>
+
+<!-- FILTRO CATEGORIAS -->
+<div class="filtro-categorias">
+    <a href="{{ url_for('documentos', categoria='todos') }}" class="filtro-btn {% if categoria_ativa == 'todos' %}active{% endif %}">
+        <i class="fas fa-th-list me-1"></i> Todos
+    </a>
+    {% for cat in categorias %}
+    <a href="{{ url_for('documentos', categoria=cat) }}" class="filtro-btn {% if categoria_ativa == cat %}active{% endif %}">
+        {{ cat }}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- GRID DOCUMENTOS -->
+{% if documentos %}
+<div class="docs-grid">
+    {% for doc in documentos %}
+    {% set icone_classe = 'icone-sumario' %}
+    {% set icone_fa = 'fa-file-alt' %}
+    {% if 'Contrato' in doc.categoria %}{% set icone_classe = 'icone-contrato' %}{% set icone_fa = 'fa-file-contract' %}
+    {% elif 'Ficha' in doc.categoria %}{% set icone_classe = 'icone-ficha' %}{% set icone_fa = 'fa-file-alt' %}
+    {% elif 'Pagamento' in doc.categoria %}{% set icone_classe = 'icone-pagamento' %}{% set icone_fa = 'fa-receipt' %}
+    {% elif 'Sumário' in doc.categoria %}{% set icone_classe = 'icone-sumario' %}{% set icone_fa = 'fa-clipboard-list' %}
+    {% elif 'Factura' in doc.categoria %}{% set icone_classe = 'icone-factura' %}{% set icone_fa = 'fa-file-invoice' %}
+    {% endif %}
+    <div class="doc-card">
+        <div class="doc-icone {{ icone_classe }}"><i class="fas {{ icone_fa }}"></i></div>
+        <div class="doc-info">
+            <div class="doc-nome">{{ doc.nome }}</div>
+            <div class="doc-categoria">{{ doc.categoria }}</div>
+            <div class="doc-data">{{ doc.data_upload.strftime('%d/%m/%Y %H:%M') }} • {{ doc.uploaded_by }}</div>
+        </div>
+        <div class="doc-actions">
+            <a href="{{ url_for('download_documento', id=doc.id) }}" class="btn-doc btn-download" title="Transferir"><i class="fas fa-download"></i></a>
+            <a href="{{ url_for('deletar_documento', id=doc.id) }}" class="btn-doc btn-delete" title="Remover" onclick="return confirm('Remover este documento?')"><i class="fas fa-trash"></i></a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-folder-open fa-5x mb-4" style="color:rgba(255,255,255,0.05);"></i>
+    <h4 class="text-white mb-2">Nenhum documento</h4>
+    <button class="btn-add-doc" data-bs-toggle="modal" data-bs-target="#modalDocumento">Carregar Documento</button>
+</div>
+{% endif %}
+
+<!-- MODAL UPLOAD -->
+<div class="modal fade modal-premium" id="modalDocumento" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#0033A0,#001a4d);color:white;border-radius:20px 20px 0 0;">
+                <h5><i class="fas fa-upload me-2" style="color:#FFD700;"></i>Carregar Documento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('upload_documento') }}" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Documento <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoria <span class="text-danger">*</span></label>
+                        <select name="categoria" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <option>Contratos</option>
+                            <option>Fichas de Inscrição</option>
+                            <option>Comprovativos de Pagamento</option>
+                            <option>Sumários</option>
+                            <option>Facturas</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Arquivo <span class="text-danger">*</span></label>
+                        <input type="file" name="arquivo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descrição</label>
+                        <textarea name="descricao" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-outline-premium" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-add-doc"><i class="fas fa-save"></i> Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

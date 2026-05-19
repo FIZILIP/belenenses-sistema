@@ -4,6 +4,8 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
+from flask import send_file
+
 import os
 
 app = Flask(__name__)
@@ -13,12 +15,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///belenenses.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER_COMISSAO'] = 'static/uploads/comissao'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/atletas'
-app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
+app.config['UPLOAD_FOLDER_DOCS'] = 'static/uploads/documentos'
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER_COMISSAO'], exist_ok=True)
+os.makedirs(app.config['UPLOAD_FOLDER_DOCS'], exist_ok=True)
 
-from models import db, User, Atleta, ComissaoTecnica, Compra, GastoMensal, ContaFixa, Inventario, Reuniao, Evento, FichaMedica, Scouting
+from models import db, User, Atleta, ComissaoTecnica, Compra, GastoMensal, ContaFixa, Inventario, Reuniao, Evento, FichaMedica, Scouting, Patrocinio, Documento
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -676,6 +680,124 @@ def adicionar_reuniao():
         db.session.rollback()
         flash(f'Erro ao agendar reunião: {str(e)}', 'error')
     return redirect(url_for('reunioes'))
+
+# ==================== ROTAS PARA PATROCÍNIOS ====================
+@app.route('/patrocinios')
+@login_required
+def patrocinios():
+    patrocinios_list = Patrocinio.query.all()
+    total_aportes = sum(p.valor_aporte for p in patrocinios_list if p.status == 'ativo')
+    return render_template('patrocinios.html', patrocinios=patrocinios_list, total_aportes=total_aportes)
+
+@app.route('/patrocinios/adicionar', methods=['POST'])
+@login_required
+def adicionar_patrocinio():
+    try:
+        patrocinio = Patrocinio(
+            nome_patrocinador=request.form['nome_patrocinador'],
+            valor_aporte=float(request.form['valor_aporte']),
+            data_inicio=datetime.strptime(request.form['data_inicio'], '%Y-%m-%d').date() if request.form.get('data_inicio') else None,
+            data_fim=datetime.strptime(request.form['data_fim'], '%Y-%m-%d').date() if request.form.get('data_fim') else None,
+            tipo=request.form.get('tipo'),
+            descricao=request.form.get('descricao'),
+            contato=request.form.get('contato'),
+            status=request.form.get('status', 'ativo')
+        )
+        db.session.add(patrocinio)
+        db.session.commit()
+        flash(f'Patrocínio de {patrocinio.nome_patrocinador} cadastrado!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro: {str(e)}', 'error')
+    return redirect(url_for('patrocinios'))
+
+@app.route('/patrocinios/atualizar/<int:id>', methods=['POST'])
+@login_required
+def atualizar_patrocinio(id):
+    patrocinio = Patrocinio.query.get_or_404(id)
+    try:
+        patrocinio.status = request.form['status']
+        db.session.commit()
+        flash('Status atualizado!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro: {str(e)}', 'error')
+    return redirect(url_for('patrocinios'))
+
+@app.route('/patrocinios/deletar/<int:id>')
+@login_required
+def deletar_patrocinio(id):
+    patrocinio = Patrocinio.query.get_or_404(id)
+    nome = patrocinio.nome_patrocinador
+    db.session.delete(patrocinio)
+    db.session.commit()
+    flash(f'Patrocínio de {nome} removido!', 'success')
+    return redirect(url_for('patrocinios'))
+
+# ==================== ROTAS PARA DOCUMENTOS ====================
+@app.route('/documentos')
+@login_required
+def documentos():
+    categoria_filtro = request.args.get('categoria', 'todos')
+    if categoria_filtro == 'todos':
+        docs = Documento.query.order_by(Documento.data_upload.desc()).all()
+    else:
+        docs = Documento.query.filter_by(categoria=categoria_filtro).order_by(Documento.data_upload.desc()).all()
+    
+    categorias = ['Contratos', 'Fichas de Inscrição', 'Comprovativos de Pagamento', 'Sumários', 'Facturas']
+    return render_template('documentos.html', documentos=docs, categorias=categorias, categoria_ativa=categoria_filtro)
+
+@app.route('/documentos/upload', methods=['POST'])
+@login_required
+def upload_documento():
+    try:
+        if 'arquivo' not in request.files:
+            flash('Nenhum arquivo enviado!', 'error')
+            return redirect(url_for('documentos'))
+        
+        arquivo = request.files['arquivo']
+        if arquivo.filename == '':
+            flash('Nenhum arquivo selecionado!', 'error')
+            return redirect(url_for('documentos'))
+        
+        if arquivo:
+            filename = secure_filename(f"{datetime.now().timestamp()}_{arquivo.filename}")
+            arquivo.save(os.path.join(app.config['UPLOAD_FOLDER_DOCS'], filename))
+            
+            doc = Documento(
+                nome=request.form['nome'],
+                categoria=request.form['categoria'],
+                arquivo=filename,
+                descricao=request.form.get('descricao', ''),
+                uploaded_by=current_user.username
+            )
+            db.session.add(doc)
+            db.session.commit()
+            flash('Documento carregado com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro: {str(e)}', 'error')
+    return redirect(url_for('documentos'))
+
+@app.route('/documentos/download/<int:id>')
+@login_required
+def download_documento(id):
+    doc = Documento.query.get_or_404(id)
+    caminho = os.path.join(app.config['UPLOAD_FOLDER_DOCS'], doc.arquivo)
+    return send_file(caminho, as_attachment=True, download_name=doc.arquivo)
+
+@app.route('/documentos/deletar/<int:id>')
+@login_required
+def deletar_documento(id):
+    doc = Documento.query.get_or_404(id)
+    try:
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER_DOCS'], doc.arquivo))
+    except:
+        pass
+    db.session.delete(doc)
+    db.session.commit()
+    flash('Documento removido!', 'success')
+    return redirect(url_for('documentos'))
 
 if __name__ == '__main__':
     with app.app_context():
