@@ -308,6 +308,18 @@
                 <i class="fas fa-envelope"></i> {{ atleta.email }}
             </div>
             {% endif %}
+            
+            {% if atleta.salario %}
+            <div class="info-linha">
+                <i class="fas fa-euro-sign"></i> € {{ "%.2f"|format(atleta.salario) }}
+            </div>
+            {% endif %}
+            
+            {% if atleta.contrato_fim %}
+            <div class="info-linha">
+                <i class="fas fa-file-contract"></i> Contrato até {{ atleta.contrato_fim.strftime('%d/%m/%Y') }}
+            </div>
+            {% endif %}
         </div>
         
         <!-- Ações -->
@@ -404,6 +416,23 @@
                             <label class="form-label">Endereço</label>
                             <input type="text" name="endereco" class="form-control" placeholder="Rua, número, bairro...">
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Salário (€)</label>
+                            <input type="number" step="0.01" name="salario" class="form-control" placeholder="0,00">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Prémios (€)</label>
+                            <input type="number" step="0.01" name="premios" class="form-control" placeholder="0,00">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Início Contrato</label>
+                            <input type="date" name="contrato_inicio" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Fim Contrato</label>
+                            <input type="date" name="contrato_fim" class="form-control">
+                        </div>
+
                         <div class="col-12">
                             <label class="form-label">Foto do Atleta</label>
                             <input type="file" name="foto" accept="image/*" class="form-control">
