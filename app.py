@@ -199,8 +199,8 @@ def editar_atleta(id):
             atleta.email = request.form.get('email') or None
             atleta.categoria = request.form.get('categoria') or None
             atleta.endereco = request.form.get('endereco') or None
-            atleta.salario = float(request.form.get('salario') or 0)
-            atleta.premios = float(request.form.get('premios') or 0)
+            atleta.salario = float(request.form['salario']) if request.form.get('salario') else None
+            atleta.premios = float(request.form['premios']) if request.form.get('premios') else None
             atleta.contrato_inicio = datetime.strptime(request.form.get('contrato_inicio'), '%Y-%m-%d').date() if request.form.get('contrato_inicio') else None
             atleta.contrato_fim = datetime.strptime(request.form.get('contrato_fim'), '%Y-%m-%d').date() if request.form.get('contrato_fim') else None
 
