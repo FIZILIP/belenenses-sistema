@@ -9,7 +9,7 @@ import os
 from supabase import create_client, Client
 
 SUPABASE_URL = "https://qkkjwiyxsiununimsipp.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFra2p3aXl4c2l1bnVuaW1zaXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NTg2NDAsImV4cCI6MjA2MzIzNDY0MH0.S0lE6T8z9zQDrCG7QysHDwFy7l9Z5wZF8mHVt7sBzHU"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFra2p3aXl4c2l1bnVuaW1zaXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTA2OTYsImV4cCI6MjA5NDc2NjY5Nn0.flpfkgAal_Zbmei2tNDfJrbhvgLUJT9GHYj2Iw03mkU"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
