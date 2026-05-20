@@ -13,8 +13,7 @@
             <div class="col-md-4 text-center">
                 <div class="mb-3">
                     {% if atleta.foto %}
-                        <img src="{{ url_for('static', filename='uploads/atletas/' + atleta.foto) }}" 
-                             class="rounded-circle mb-3" 
+                        <img src="https://qkkjwiyxsiununimsipp.supabase.co/storage/v1/object/public/atletas/{{ atleta.foto }}"
                              style="width: 150px; height: 150px; object-fit: cover; border: 3px solid var(--azul-belenenses);">
                     {% else %}
                         <i class="fas fa-user-circle fa-8x" style="color: var(--azul-belenenses);"></i>
@@ -86,6 +85,10 @@
                         <div class="mb-3">
                             <label class="form-label">Email</label>
                             <input type="email" name="email" class="form-control" value="{{ atleta.email or '' }}">
+                        </div>
+                                                <div class="mb-3">
+                            <label class="form-label">IBAN</label>
+                            <input type="text" name="iban" class="form-control" value="{{ atleta.iban or '' }}" placeholder="PT50 0000 0000 0000 0000 0000 0">
                         </div>
                         
                         <div class="mb-3">

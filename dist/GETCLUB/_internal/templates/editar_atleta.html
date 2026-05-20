@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card-content">
+    <div class="card-header-custom">
+        <h5><i class="fas fa-edit"></i> Editar Atleta</h5>
+    </div>
+    
+    {% if atleta %}
+    <form method="POST" enctype="multipart/form-data" class="mt-3">
+        <div class="row">
+            <!-- Coluna da Foto -->
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    {% if atleta.foto %}
+                        <img src="{{ url_for('static', filename='uploads/atletas/' + atleta.foto) }}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover; border: 3px solid var(--azul-belenenses);">
+                    {% else %}
+                        <i class="fas fa-user-circle fa-8x" style="color: var(--azul-belenenses);"></i>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nova Foto</label>
+                    <input type="file" name="foto" accept="image/*" class="form-control">
+                    <small class="text-muted">Deixe em branco para manter a foto atual</small>
+                </div>
+            </div>
+            
+            <!-- Coluna dos Dados -->
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Nome Completo <span class="text-danger">*</span></label>
+                            <input type="text" name="nome" class="form-control" value="{{ atleta.nome }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Data Nascimento</label>
+                            <input type="date" name="data_nascimento" class="form-control" 
+                                   value="{{ atleta.data_nascimento.strftime('%Y-%m-%d') if atleta.data_nascimento else '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Posição</label>
+                            <select name="posicao" class="form-control">
+                                <option value="">Selecione</option>
+                                <option value="Guarda-Redes" {% if atleta.posicao == 'Guarda-Redes' %}selected{% endif %}>Guarda-Redes</option>
+                                <option value="Central" {% if atleta.posicao == 'Central' %}selected{% endif %}>Central</option>
+                                <option value="Lateral Direito" {% if atleta.posicao == 'Lateral Direito' %}selected{% endif %}>Lateral Direito</option>
+                                <option value="Lateral Esquerdo" {% if atleta.posicao == 'Lateral Esquerdo' %}selected{% endif %}>Lateral Esquerdo</option>
+                                <option value="Médio Central" {% if atleta.posicao == 'Médio Central' %}selected{% endif %}>Médio Central</option>
+                                <option value="Médio Defensivo" {% if atleta.posicao == 'Médio Defensivo' %}selected{% endif %}>Médio Defensivo</option>
+                                <option value="Médio Ofensivo" {% if atleta.posicao == 'Médio Ofensivo' %}selected{% endif %}>Médio Ofensivo</option>
+                                <option value="Extremo Direito" {% if atleta.posicao == 'Extremo Direito' %}selected{% endif %}>Extremo Direito</option>
+                                <option value="Extremo Esquerdo" {% if atleta.posicao == 'Extremo Esquerdo' %}selected{% endif %}>Extremo Esquerdo</option>
+                                <option value="Ponta de Lança" {% if atleta.posicao == 'Ponta de Lança' %}selected{% endif %}>Ponta de Lança</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Número da Camisa</label>
+                            <input type="text" name="numero" class="form-control" value="{{ atleta.numero or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Altura (m)</label>
+                            <input type="number" step="0.01" name="altura" class="form-control" 
+                                   value="{{ atleta.altura or '' }}" placeholder="Ex: 1.75">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Peso (kg)</label>
+                            <input type="number" step="0.1" name="peso" class="form-control" 
+                                   value="{{ atleta.peso or '' }}" placeholder="Ex: 70.5">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Telefone</label>
+                            <input type="tel" name="telefone" class="form-control" value="{{ atleta.telefone or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" value="{{ atleta.email or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Categoria</label>
+                            <select name="categoria" class="form-control">
+                                <option value="">Selecione</option>
+                                <option value="Profissional" {% if atleta.categoria == 'Profissional' %}selected{% endif %}>Profissional</option>
+                                <option value="Sub-23" {% if atleta.categoria == 'Sub-23' %}selected{% endif %}>Sub-23</option>
+                                <option value="Juniores" {% if atleta.categoria == 'Juniores' %}selected{% endif %}>Juniores</option>
+                                <option value="Juvenis" {% if atleta.categoria == 'Juvenis' %}selected{% endif %}>Juvenis</option>
+                                <option value="Iniciados" {% if atleta.categoria == 'Iniciados' %}selected{% endif %}>Iniciados</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label class="form-label">Endereço</label>
+                            <textarea name="endereco" class="form-control" rows="2">{{ atleta.endereco or '' }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Salário (€)</label>
+                            <input type="number" step="0.01" name="salario" class="form-control" value="{{ atleta.salario or 0 }}" placeholder="0,00">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Prémios (€)</label>
+                            <input type="number" step="0.01" name="premios" class="form-control" value="{{ atleta.premios or 0 }}" placeholder="0,00">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Início Contrato</label>
+                            <input type="date" name="contrato_inicio" class="form-control" value="{{ atleta.contrato_inicio.strftime('%Y-%m-%d') if atleta.contrato_inicio else '' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Fim Contrato</label>
+                            <input type="date" name="contrato_fim" class="form-control" value="{{ atleta.contrato_fim.strftime('%Y-%m-%d') if atleta.contrato_fim else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-end mt-3">
+            <a href="{{ url_for('atletas') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit" class="btn-belenenses">
+                <i class="fas fa-save"></i> Salvar Alterações
+            </button>
+        </div>
+    </form>
+    {% else %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i> Atleta não encontrado!
+    </div>
+    <a href="{{ url_for('atletas') }}" class="btn btn-belenenses">Voltar para lista</a>
+    {% endif %}
+</div>
+{% endblock %}

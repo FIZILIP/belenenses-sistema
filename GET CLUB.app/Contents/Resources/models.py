@@ -1,0 +1,164 @@
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from datetime import datetime
+
+db = SQLAlchemy()
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime)
+
+class Atleta(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    data_nascimento = db.Column(db.Date, nullable=False)
+    posicao = db.Column(db.String(50))
+    numero = db.Column(db.String(3))
+    altura = db.Column(db.Float)
+    peso = db.Column(db.Float)
+    telefone = db.Column(db.String(20))
+    email = db.Column(db.String(100))
+    endereco = db.Column(db.String(200))
+    categoria = db.Column(db.String(50))
+    salario = db.Column(db.Float)
+    premios = db.Column(db.Float)
+    contrato_inicio = db.Column(db.Date)
+    contrato_fim = db.Column(db.Date)
+    foto = db.Column(db.String(200))
+    status = db.Column(db.String(20), default='ativo')
+
+class ComissaoTecnica(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    cargo = db.Column(db.String(50))
+    especialidade = db.Column(db.String(100))
+    telefone = db.Column(db.String(20))
+    email = db.Column(db.String(100))
+    data_contratacao = db.Column(db.Date)
+    status = db.Column(db.String(20), default='ativo')
+    foto = db.Column(db.String(200))
+    
+class Compra(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    item = db.Column(db.String(100), nullable=False)
+    quantidade = db.Column(db.Integer)
+    valor_unitario = db.Column(db.Float)
+    total = db.Column(db.Float)
+    data_compra = db.Column(db.Date)
+    fornecedor = db.Column(db.String(100))
+    categoria = db.Column(db.String(50))
+
+class GastoMensal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    mes = db.Column(db.String(7))
+    categoria = db.Column(db.String(50))
+    valor = db.Column(db.Float)
+    descricao = db.Column(db.String(200))
+    data_pagamento = db.Column(db.Date)
+    comprovante = db.Column(db.String(200))
+
+class ContaFixa(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    descricao = db.Column(db.String(100))
+    valor = db.Column(db.Float)
+    data_vencimento = db.Column(db.Integer)
+    categoria = db.Column(db.String(50))
+    status = db.Column(db.String(20))
+
+class Inventario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    categoria = db.Column(db.String(50))
+    quantidade = db.Column(db.Integer)
+    localizacao = db.Column(db.String(100))
+    data_aquisicao = db.Column(db.Date)
+    valor_aquisicao = db.Column(db.Float)
+    status = db.Column(db.String(20))
+
+class Reuniao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(100), nullable=False)
+    data = db.Column(db.Date)
+    hora = db.Column(db.String(5))
+    local = db.Column(db.String(100))
+    pauta = db.Column(db.Text)
+    participantes = db.Column(db.Text)
+    status = db.Column(db.String(20))
+    ata = db.Column(db.Text)
+
+class Evento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(100), nullable=False)
+    data = db.Column(db.Date)
+    tipo = db.Column(db.String(50))
+    descricao = db.Column(db.String(200))
+    
+class FichaMedica(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    atleta_id = db.Column(db.Integer, db.ForeignKey('atleta.id'), nullable=False)
+    tipo_lesao = db.Column(db.String(100))
+    data_lesao = db.Column(db.Date)
+    data_retorno_previsto = db.Column(db.Date)
+    data_retorno_efetivo = db.Column(db.Date)
+    gravidade = db.Column(db.String(20))
+    status = db.Column(db.String(20), default='em_tratamento')
+    medico_responsavel = db.Column(db.String(100))
+    diagnostico = db.Column(db.Text)
+    tratamento = db.Column(db.Text)
+    observacoes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    atleta = db.relationship('Atleta', backref='fichas_medicas')
+
+class Scouting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome_jogador = db.Column(db.String(100), nullable=False)
+    clube_atual = db.Column(db.String(100))
+    posicao = db.Column(db.String(50))
+    data_nascimento = db.Column(db.Date)
+    nacionalidade = db.Column(db.String(50))
+    altura = db.Column(db.Float)
+    peso = db.Column(db.Float)
+    pe_dominante = db.Column(db.String(10))
+    valor_estimado = db.Column(db.Float)
+    contrato_ate = db.Column(db.Date)
+    nota_tecnica = db.Column(db.Integer)
+    nota_fisica = db.Column(db.Integer)
+    nota_tatica = db.Column(db.Integer)
+    nota_mental = db.Column(db.Integer)
+    partida_observada = db.Column(db.String(100))
+    data_observacao = db.Column(db.Date)
+    campeonato = db.Column(db.String(100))
+    observador = db.Column(db.String(100))
+    pontos_fortes = db.Column(db.Text)
+    pontos_fracos = db.Column(db.Text)
+    resumo = db.Column(db.Text)
+    indicacao = db.Column(db.String(20))
+    video_url = db.Column(db.String(200))
+    status = db.Column(db.String(20), default='ativo')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+class Patrocinio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome_patrocinador = db.Column(db.String(100), nullable=False)
+    valor_aporte = db.Column(db.Float, nullable=False)
+    data_inicio = db.Column(db.Date)
+    data_fim = db.Column(db.Date)
+    tipo = db.Column(db.String(50))  # Financeiro, Material, Serviços
+    descricao = db.Column(db.Text)
+    contato = db.Column(db.String(100))
+    status = db.Column(db.String(20), default='ativo')  # ativo, encerrado, pendente
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Documento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(200), nullable=False)
+    categoria = db.Column(db.String(50), nullable=False)  # Contratos, Fichas de Inscrição, Comprovativos de Pagamento, Sumários, Facturas
+    arquivo = db.Column(db.String(300), nullable=False)
+    descricao = db.Column(db.Text)
+    data_upload = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_by = db.Column(db.String(80))
