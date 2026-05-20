@@ -187,6 +187,7 @@ def atletas():
                 peso=float(request.form['peso']) if request.form.get('peso') else None,
                 telefone=request.form.get('telefone') or None,
                 email=request.form.get('email') or None,
+                iban=request.form.get('iban') or None,
                 endereco=request.form.get('endereco') or None,
                 categoria=request.form.get('categoria') or None,
                 foto=foto_path
@@ -214,6 +215,7 @@ def editar_atleta(id):
             atleta.numero = request.form.get('numero') or None
             atleta.telefone = request.form.get('telefone') or None
             atleta.email = request.form.get('email') or None
+            atleta.iban = request.form.get('iban') or None
             atleta.categoria = request.form.get('categoria') or None
             atleta.endereco = request.form.get('endereco') or None
             atleta.salario = float(request.form.get('salario') or 0)
