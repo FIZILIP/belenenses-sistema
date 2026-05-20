@@ -21,7 +21,7 @@ if database_url:
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///belenenses.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///belenenses-db-novo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads/atletas'
 app.config['UPLOAD_FOLDER_COMISSAO'] = 'static/uploads/comissao'
