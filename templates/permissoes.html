@@ -16,6 +16,7 @@
                     <tr>
                         <th>Usuário</th>
                         <th>Email</th>
+                        <th>Cargo Direção</th>
                         <th>Admin</th>
                         <th>Atletas</th>
                         <th>Comissão</th>
@@ -34,6 +35,16 @@
                         <tr>
                             <td>{{ usuario.username }}</td>
                             <td>{{ usuario.email }}</td>
+                            <td>
+                                <select name="perfil_direcao" class="form-select form-select-sm">
+                                    <option value="">Manual</option>
+                                    <option value="diretor_futebol" {% if usuario.cargo_direcao == 'diretor_futebol' %}selected{% endif %}>Diretor Futebol</option>
+                                    <option value="team_manager" {% if usuario.cargo_direcao == 'team_manager' %}selected{% endif %}>Team Manager</option>
+                                    <option value="supervisor" {% if usuario.cargo_direcao == 'supervisor' %}selected{% endif %}>Supervisor</option>
+                                    <option value="gerente_marketing" {% if usuario.cargo_direcao == 'gerente_marketing' %}selected{% endif %}>Gerente Marketing</option>
+                                    <option value="diretor_investidor" {% if usuario.cargo_direcao == 'diretor_investidor' %}selected{% endif %}>Diretor Investidor</option>
+                                </select>
+                            </td>
                             <td><input type="checkbox" name="is_admin" {% if usuario.is_admin %}checked{% endif %}></td>
                             <td><input type="checkbox" name="can_manage_atletas" {% if usuario.can_manage_atletas %}checked{% endif %}></td>
                             <td><input type="checkbox" name="can_manage_comissao" {% if usuario.can_manage_comissao %}checked{% endif %}></td>

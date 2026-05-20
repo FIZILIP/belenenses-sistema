@@ -128,7 +128,69 @@ PERMISSAO_POR_ENDPOINT = {
     "upload_documento": "can_manage_documentos",
     "download_documento": "can_manage_documentos",
     "deletar_documento": "can_manage_documentos",
+    "direcao": "can_manage_reunioes",
 }
+
+PERFIS_DIRECAO = {
+    "diretor_futebol": {
+        "label": "Diretor Futebol",
+        "can_manage_atletas": True,
+        "can_manage_comissao": True,
+        "can_manage_reunioes": True,
+        "can_manage_medico": True,
+        "can_manage_scouting": True,
+        "can_manage_documentos": True,
+    },
+    "team_manager": {
+        "label": "Team Manager",
+        "can_manage_atletas": True,
+        "can_manage_reunioes": True,
+        "can_manage_medico": True,
+        "can_manage_documentos": True,
+    },
+    "supervisor": {
+        "label": "Supervisor",
+        "can_manage_atletas": True,
+        "can_manage_comissao": True,
+        "can_manage_financeiro": True,
+        "can_manage_inventario": True,
+        "can_manage_reunioes": True,
+        "can_manage_medico": True,
+        "can_manage_scouting": True,
+        "can_manage_documentos": True,
+    },
+    "gerente_marketing": {
+        "label": "Gerente Marketing",
+        "can_manage_financeiro": True,
+        "can_manage_reunioes": True,
+        "can_manage_documentos": True,
+    },
+    "diretor_investidor": {
+        "label": "Diretor Investidor",
+        "can_manage_financeiro": True,
+        "can_manage_reunioes": True,
+        "can_manage_documentos": True,
+    },
+}
+
+def aplicar_perfil_direcao(usuario, perfil):
+    usuario.cargo_direcao = perfil if perfil in PERFIS_DIRECAO else None
+    campos = [
+        "can_manage_atletas",
+        "can_manage_comissao",
+        "can_manage_financeiro",
+        "can_manage_inventario",
+        "can_manage_reunioes",
+        "can_manage_medico",
+        "can_manage_scouting",
+        "can_manage_documentos",
+    ]
+    for campo in campos:
+        setattr(usuario, campo, False)
+    if perfil in PERFIS_DIRECAO:
+        for campo, valor in PERFIS_DIRECAO[perfil].items():
+            if campo.startswith("can_manage_"):
+                setattr(usuario, campo, valor)
 
 def usuario_tem_permissao(permissao):
     if not current_user.is_authenticated:
@@ -139,7 +201,10 @@ def usuario_tem_permissao(permissao):
 
 @app.context_processor
 def inject_permissions():
-    return {"usuario_tem_permissao": usuario_tem_permissao}
+    return {
+        "usuario_tem_permissao": usuario_tem_permissao,
+        "PERFIS_DIRECAO": PERFIS_DIRECAO
+    }
 
 @app.before_request
 def verificar_permissao_modulo():
@@ -220,6 +285,7 @@ def criar_usuario():
     email = request.form.get('email')
     password = request.form.get('password')
     is_admin = request.form.get('is_admin') == '1'
+    perfil_direcao = request.form.get('perfil_direcao') or None
     
     if User.query.filter_by(username=username).first():
         flash(f'Usuário {username} já existe!', 'warning')
@@ -242,8 +308,11 @@ def criar_usuario():
             can_manage_reunioes=is_admin,
             can_manage_medico=is_admin,
             can_manage_scouting=is_admin,
-            can_manage_documentos=is_admin
+            can_manage_documentos=is_admin,
+            cargo_direcao=None
         )
+        if not is_admin and perfil_direcao:
+            aplicar_perfil_direcao(novo, perfil_direcao)
         db.session.add(novo)
         db.session.commit()
         flash(f'Usuário {username} criado com sucesso!', 'success')
@@ -291,15 +360,30 @@ def atualizar_permissoes(id):
     usuario = User.query.get_or_404(id)
     try:
         novo_admin = request.form.get('is_admin') == 'on'
+        perfil_direcao = request.form.get('perfil_direcao') or None
         usuario.is_admin = novo_admin
-        usuario.can_manage_atletas = novo_admin or request.form.get('can_manage_atletas') == 'on'
-        usuario.can_manage_comissao = novo_admin or request.form.get('can_manage_comissao') == 'on'
-        usuario.can_manage_financeiro = novo_admin or request.form.get('can_manage_financeiro') == 'on'
-        usuario.can_manage_inventario = novo_admin or request.form.get('can_manage_inventario') == 'on'
-        usuario.can_manage_reunioes = novo_admin or request.form.get('can_manage_reunioes') == 'on'
-        usuario.can_manage_medico = novo_admin or request.form.get('can_manage_medico') == 'on'
-        usuario.can_manage_scouting = novo_admin or request.form.get('can_manage_scouting') == 'on'
-        usuario.can_manage_documentos = novo_admin or request.form.get('can_manage_documentos') == 'on'
+        if novo_admin:
+            usuario.can_manage_atletas = True
+            usuario.can_manage_comissao = True
+            usuario.can_manage_financeiro = True
+            usuario.can_manage_inventario = True
+            usuario.can_manage_reunioes = True
+            usuario.can_manage_medico = True
+            usuario.can_manage_scouting = True
+            usuario.can_manage_documentos = True
+            usuario.cargo_direcao = None
+        elif perfil_direcao in PERFIS_DIRECAO:
+            aplicar_perfil_direcao(usuario, perfil_direcao)
+        else:
+            usuario.cargo_direcao = None
+            usuario.can_manage_atletas = request.form.get('can_manage_atletas') == 'on'
+            usuario.can_manage_comissao = request.form.get('can_manage_comissao') == 'on'
+            usuario.can_manage_financeiro = request.form.get('can_manage_financeiro') == 'on'
+            usuario.can_manage_inventario = request.form.get('can_manage_inventario') == 'on'
+            usuario.can_manage_reunioes = request.form.get('can_manage_reunioes') == 'on'
+            usuario.can_manage_medico = request.form.get('can_manage_medico') == 'on'
+            usuario.can_manage_scouting = request.form.get('can_manage_scouting') == 'on'
+            usuario.can_manage_documentos = request.form.get('can_manage_documentos') == 'on'
         db.session.commit()
         flash(f'Permissões de {usuario.username} atualizadas!', 'success')
     except Exception as e:
@@ -962,8 +1046,18 @@ def create_admin():
             admin.can_manage_medico = True
             admin.can_manage_scouting = True
             admin.can_manage_documentos = True
+            admin.cargo_direcao = None
         db.session.commit()
         print("✅ Usuário admin configurado com permissões completas!")
+
+@app.route('/direcao')
+@login_required
+def direcao():
+    if not current_user.is_admin:
+        flash('Acesso restrito a administradores!', 'error')
+        return redirect(url_for('index'))
+    direcao_usuarios = User.query.filter(User.cargo_direcao.isnot(None)).order_by(User.username.asc()).all()
+    return render_template('direcao.html', usuarios=direcao_usuarios, perfis=PERFIS_DIRECAO)
 
 # ==================== INICIAR APP ====================
 
@@ -1111,6 +1205,16 @@ with app.app_context():
     db.create_all()
     garantir_colunas_atleta()
     garantir_colunas_permissoes_usuario()
+    try:
+        db.session.execute(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS cargo_direcao VARCHAR(50)"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        try:
+            db.session.execute(text("ALTER TABLE user ADD COLUMN cargo_direcao VARCHAR(50)"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
     create_admin()
 
 if __name__ == '__main__':

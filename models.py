@@ -18,6 +18,7 @@ class User(UserMixin, db.Model):
     can_manage_medico = db.Column(db.Boolean, default=False)
     can_manage_scouting = db.Column(db.Boolean, default=False)
     can_manage_documentos = db.Column(db.Boolean, default=False)
+    cargo_direcao = db.Column(db.String(50))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
