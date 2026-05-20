@@ -403,22 +403,31 @@
                 <i class="fas fa-chart-pie"></i> Dashboard
             </a>
         </div>
+        {% if current_user.is_admin or usuario_tem_permissao('can_manage_atletas') %}
         <div class="nav-item">
             <a href="{{ url_for('atletas') }}" class="nav-link-custom"> <i class="fas fa-users"></i> Atletas </a>
         </div>
+        {% endif %}
+        {% if current_user.is_admin or usuario_tem_permissao('can_manage_comissao') %}
         <div class="nav-item">
             <a href="{{ url_for('comissao') }}" class="nav-link-custom"> <i class="fas fa-chalkboard-user"></i> Equipa Técnica </a>
         </div>
-                   <div class="nav-item">
+        {% endif %}
+        {% if current_user.is_admin or usuario_tem_permissao('can_manage_medico') %}
+        <div class="nav-item">
             <a href="{{ url_for('departamento_medico') }}" class="nav-link-custom {% if request.endpoint == 'departamento_medico' %}active{% endif %}">
                 <i class="fas fa-heartbeat"></i> Depto. Médico
             </a>
         </div>
+        {% endif %}
+        {% if current_user.is_admin or usuario_tem_permissao('can_manage_scouting') %}
         <div class="nav-item">
             <a href="{{ url_for('scouting') }}" class="nav-link-custom {% if request.endpoint == 'scouting' %}active{% endif %}">
                 <i class="fas fa-magnifying-glass"></i> Scouting
             </a>
         </div>
+        {% endif %}
+        {% if current_user.is_admin or usuario_tem_permissao('can_manage_financeiro') %}
         <div class="nav-item">
             <a href="{{ url_for('compras') }}" class="nav-link-custom"> <i class="fas fa-shopping-cart"></i> Compras </a>
         </div>
@@ -429,27 +438,37 @@
             <a href="{{ url_for('contas_fixas') }}" class="nav-link-custom"> <i class="fas fa-file-invoice-dollar"></i> Contas Fixas </a>
         </div>
         <div class="nav-item">
+            <a href="{{ url_for('patrocinios') }}" class="nav-link-custom {% if request.endpoint == 'patrocinios' %}active{% endif %}">
+                <i class="fas fa-hand-holding-usd"></i> Patrocínios
+            </a>
+        </div>
+        {% endif %}
+        {% if current_user.is_admin or usuario_tem_permissao('can_manage_inventario') %}
+        <div class="nav-item">
             <a href="{{ url_for('inventario') }}" class="nav-link-custom"> <i class="fas fa-boxes"></i> Inventário </a>
         </div>
+        {% endif %}
+        {% if current_user.is_admin or usuario_tem_permissao('can_manage_reunioes') %}
         <div class="nav-item">
             <a href="{{ url_for('reunioes') }}" class="nav-link-custom"> <i class="fas fa-calendar-alt"></i> Reuniões </a>
         </div>
         <div class="nav-item">
             <a href="{{ url_for('calendario') }}" class="nav-link-custom"> <i class="fas fa-calendar-week"></i> Calendário </a>
         </div>
+        {% endif %}
+        {% if current_user.is_admin or usuario_tem_permissao('can_manage_documentos') %}
         <div class="nav-item">
             <a href="{{ url_for('documentos') }}" class="nav-link-custom {% if request.endpoint == 'documentos' %}active{% endif %}">
                 <i class="fas fa-folder-open"></i> Documentos
             </a>
         </div>
-        <div class="nav-item">
-            <a href="{{ url_for('patrocinios') }}" class="nav-link-custom {% if request.endpoint == 'patrocinios' %}active{% endif %}">
-                <i class="fas fa-hand-holding-usd"></i> Patrocínios
-            </a>
-        </div>
+        {% endif %}
         {% if current_user.is_admin %}
         <div class="nav-item">
             <a href="{{ url_for('usuarios') }}" class="nav-link-custom"> <i class="fas fa-user-shield"></i> Usuários </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('permissoes') }}" class="nav-link-custom"> <i class="fas fa-key"></i> Permissões </a>
         </div>
         {% endif %}
         <div class="nav-item" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">

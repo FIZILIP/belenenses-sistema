@@ -22,6 +22,9 @@
                         <th>Financeiro</th>
                         <th>Inventário</th>
                         <th>Reuniões</th>
+                        <th>Depto. Médico</th>
+                        <th>Scouting</th>
+                        <th>Documentos</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -37,6 +40,9 @@
                             <td><input type="checkbox" name="can_manage_financeiro" {% if usuario.can_manage_financeiro %}checked{% endif %}></td>
                             <td><input type="checkbox" name="can_manage_inventario" {% if usuario.can_manage_inventario %}checked{% endif %}></td>
                             <td><input type="checkbox" name="can_manage_reunioes" {% if usuario.can_manage_reunioes %}checked{% endif %}></td>
+                            <td><input type="checkbox" name="can_manage_medico" {% if usuario.can_manage_medico %}checked{% endif %}></td>
+                            <td><input type="checkbox" name="can_manage_scouting" {% if usuario.can_manage_scouting %}checked{% endif %}></td>
+                            <td><input type="checkbox" name="can_manage_documentos" {% if usuario.can_manage_documentos %}checked{% endif %}></td>
                             <td>
                                 <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
                             </td>

@@ -65,6 +65,96 @@ def garantir_colunas_atleta():
             except Exception:
                 db.session.rollback()
 
+def garantir_colunas_permissoes_usuario():
+    colunas = [
+        ("can_manage_atletas", "BOOLEAN DEFAULT FALSE"),
+        ("can_manage_comissao", "BOOLEAN DEFAULT FALSE"),
+        ("can_manage_financeiro", "BOOLEAN DEFAULT FALSE"),
+        ("can_manage_inventario", "BOOLEAN DEFAULT FALSE"),
+        ("can_manage_reunioes", "BOOLEAN DEFAULT FALSE"),
+        ("can_manage_medico", "BOOLEAN DEFAULT FALSE"),
+        ("can_manage_scouting", "BOOLEAN DEFAULT FALSE"),
+        ("can_manage_documentos", "BOOLEAN DEFAULT FALSE"),
+    ]
+    for nome, tipo in colunas:
+        try:
+            db.session.execute(text(f"ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS {nome} {tipo}"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            try:
+                db.session.execute(text(f"ALTER TABLE user ADD COLUMN {nome} {tipo}"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+PERMISSAO_POR_ENDPOINT = {
+    "atletas": "can_manage_atletas",
+    "editar_atleta": "can_manage_atletas",
+    "deletar_atleta": "can_manage_atletas",
+    "registrar_cartao": "can_manage_atletas",
+    "editar_suspensao": "can_manage_atletas",
+    "cumprir_suspensao": "can_manage_atletas",
+    "comissao": "can_manage_comissao",
+    "editar_comissao": "can_manage_comissao",
+    "deletar_comissao": "can_manage_comissao",
+    "compras": "can_manage_financeiro",
+    "deletar_compra": "can_manage_financeiro",
+    "gastos": "can_manage_financeiro",
+    "deletar_gasto": "can_manage_financeiro",
+    "contas_fixas": "can_manage_financeiro",
+    "toggle_conta_fixa": "can_manage_financeiro",
+    "deletar_conta_fixa": "can_manage_financeiro",
+    "patrocinios": "can_manage_financeiro",
+    "adicionar_patrocinio": "can_manage_financeiro",
+    "atualizar_patrocinio": "can_manage_financeiro",
+    "deletar_patrocinio": "can_manage_financeiro",
+    "inventario": "can_manage_inventario",
+    "deletar_item": "can_manage_inventario",
+    "reunioes": "can_manage_reunioes",
+    "concluir_reuniao": "can_manage_reunioes",
+    "deletar_reuniao": "can_manage_reunioes",
+    "editar_reuniao": "can_manage_reunioes",
+    "calendario": "can_manage_reunioes",
+    "adicionar_evento": "can_manage_reunioes",
+    "adicionar_reuniao": "can_manage_reunioes",
+    "departamento_medico": "can_manage_medico",
+    "adicionar_ficha_medica": "can_manage_medico",
+    "atualizar_ficha_medica": "can_manage_medico",
+    "scouting": "can_manage_scouting",
+    "adicionar_scouting": "can_manage_scouting",
+    "atualizar_scouting": "can_manage_scouting",
+    "documentos": "can_manage_documentos",
+    "upload_documento": "can_manage_documentos",
+    "download_documento": "can_manage_documentos",
+    "deletar_documento": "can_manage_documentos",
+}
+
+def usuario_tem_permissao(permissao):
+    if not current_user.is_authenticated:
+        return False
+    if current_user.is_admin:
+        return True
+    return bool(getattr(current_user, permissao, False))
+
+@app.context_processor
+def inject_permissions():
+    return {"usuario_tem_permissao": usuario_tem_permissao}
+
+@app.before_request
+def verificar_permissao_modulo():
+    if not current_user.is_authenticated:
+        return
+    if current_user.is_admin:
+        return
+    endpoint = request.endpoint
+    if not endpoint:
+        return
+    permissao = PERMISSAO_POR_ENDPOINT.get(endpoint)
+    if permissao and not usuario_tem_permissao(permissao):
+        flash("Você não tem permissão para acessar este módulo.", "error")
+        return redirect(url_for("index"))
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -144,7 +234,15 @@ def criar_usuario():
             username=username,
             email=email,
             password=generate_password_hash(password),
-            is_admin=is_admin
+            is_admin=is_admin,
+            can_manage_atletas=is_admin,
+            can_manage_comissao=is_admin,
+            can_manage_financeiro=is_admin,
+            can_manage_inventario=is_admin,
+            can_manage_reunioes=is_admin,
+            can_manage_medico=is_admin,
+            can_manage_scouting=is_admin,
+            can_manage_documentos=is_admin
         )
         db.session.add(novo)
         db.session.commit()
@@ -173,6 +271,41 @@ def deletar_usuario(id):
     
     flash(f'Usuário {nome} removido com sucesso!', 'success')
     return redirect(url_for('usuarios'))
+
+@app.route('/permissoes')
+@login_required
+def permissoes():
+    if not current_user.is_admin:
+        flash('Acesso restrito a administradores!', 'error')
+        return redirect(url_for('index'))
+    todos_usuarios = User.query.order_by(User.username.asc()).all()
+    return render_template('permissoes.html', usuarios=todos_usuarios)
+
+@app.route('/permissoes/atualizar/<int:id>', methods=['POST'])
+@login_required
+def atualizar_permissoes(id):
+    if not current_user.is_admin:
+        flash('Acesso negado!', 'error')
+        return redirect(url_for('index'))
+
+    usuario = User.query.get_or_404(id)
+    try:
+        novo_admin = request.form.get('is_admin') == 'on'
+        usuario.is_admin = novo_admin
+        usuario.can_manage_atletas = novo_admin or request.form.get('can_manage_atletas') == 'on'
+        usuario.can_manage_comissao = novo_admin or request.form.get('can_manage_comissao') == 'on'
+        usuario.can_manage_financeiro = novo_admin or request.form.get('can_manage_financeiro') == 'on'
+        usuario.can_manage_inventario = novo_admin or request.form.get('can_manage_inventario') == 'on'
+        usuario.can_manage_reunioes = novo_admin or request.form.get('can_manage_reunioes') == 'on'
+        usuario.can_manage_medico = novo_admin or request.form.get('can_manage_medico') == 'on'
+        usuario.can_manage_scouting = novo_admin or request.form.get('can_manage_scouting') == 'on'
+        usuario.can_manage_documentos = novo_admin or request.form.get('can_manage_documentos') == 'on'
+        db.session.commit()
+        flash(f'Permissões de {usuario.username} atualizadas!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao atualizar permissões: {str(e)}', 'error')
+    return redirect(url_for('permissoes'))
 
 # ==================== ROTAS PARA ATLETAS ====================
 @app.route('/atletas', methods=['GET', 'POST'])
@@ -808,11 +941,29 @@ def create_admin():
                 username='admin',
                 email='admin@belenenses.com',
                 password=generate_password_hash('belenenses123'),
-                is_admin=True
+                is_admin=True,
+                can_manage_atletas=True,
+                can_manage_comissao=True,
+                can_manage_financeiro=True,
+                can_manage_inventario=True,
+                can_manage_reunioes=True,
+                can_manage_medico=True,
+                can_manage_scouting=True,
+                can_manage_documentos=True
             )
             db.session.add(admin)
-            db.session.commit()
-            print("✅ Usuário admin criado!")
+        else:
+            admin.is_admin = True
+            admin.can_manage_atletas = True
+            admin.can_manage_comissao = True
+            admin.can_manage_financeiro = True
+            admin.can_manage_inventario = True
+            admin.can_manage_reunioes = True
+            admin.can_manage_medico = True
+            admin.can_manage_scouting = True
+            admin.can_manage_documentos = True
+        db.session.commit()
+        print("✅ Usuário admin configurado com permissões completas!")
 
 # ==================== INICIAR APP ====================
 
@@ -959,6 +1110,7 @@ def deletar_documento(id):
 with app.app_context():
     db.create_all()
     garantir_colunas_atleta()
+    garantir_colunas_permissoes_usuario()
     create_admin()
 
 if __name__ == '__main__':
