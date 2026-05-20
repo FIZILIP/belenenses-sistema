@@ -32,7 +32,6 @@ class Atleta(db.Model):
     contrato_fim = db.Column(db.Date)
     foto = db.Column(db.String(200))
     status = db.Column(db.String(20), default='ativo')
-    iban = db.Column(db.String(34))
 
 class ComissaoTecnica(db.Model):
     id = db.Column(db.Integer, primary_key=True)

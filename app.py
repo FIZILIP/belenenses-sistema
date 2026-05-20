@@ -21,7 +21,7 @@ if database_url:
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///belenenses-db-novo.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///belenenses.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads/atletas'
 app.config['UPLOAD_FOLDER_COMISSAO'] = 'static/uploads/comissao'
@@ -874,27 +874,6 @@ def deletar_documento(id):
 with app.app_context():
     db.create_all()
     create_admin()
-
-@app.route('/migrar')
-def migrar():
-    from sqlalchemy import text
-    colunas = [
-        ('salario', 'FLOAT'),
-        ('premios', 'FLOAT'),
-        ('contrato_inicio', 'DATE'),
-        ('contrato_fim', 'DATE'),
-        ('iban', 'VARCHAR(34)'),
-        ('status', 'VARCHAR(20) DEFAULT \'ativo\'')
-    ]
-    resultado = []
-    for nome, tipo in colunas:
-        try:
-            db.session.execute(text(f'ALTER TABLE atleta ADD COLUMN {nome} {tipo}'))
-            db.session.commit()
-            resultado.append(f'✅ {nome}')
-        except Exception as e:
-            resultado.append(f'⏭️ {nome}: {e}')
-    return '<br>'.join(resultado)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5002))
