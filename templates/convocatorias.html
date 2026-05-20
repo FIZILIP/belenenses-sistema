@@ -25,6 +25,10 @@
                     <label class="form-label">Data do Jogo</label>
                     <input type="date" name="data_jogo" class="form-control" required>
                 </div>
+                <div class="col-md-4">
+                    <label class="form-label">Treinador</label>
+                    <input type="text" name="treinador" class="form-control" required placeholder="Nome do treinador">
+                </div>
                 <div class="col-12">
                     <label class="form-label">Jogadoras Aptas</label>
                     <div class="row g-2">
@@ -68,7 +72,7 @@
         <div class="table-responsive">
             <table class="custom-table table">
                 <thead>
-                    <tr><th>Data</th><th>Título</th><th>Adversário</th><th>Convocadas</th><th>Criada por</th></tr>
+                    <tr><th>Data</th><th>Título</th><th>Adversário</th><th>Treinador</th><th>Convocadas</th><th>Criada por</th><th>PDF</th></tr>
                 </thead>
                 <tbody>
                     {% for c in convocatorias %}
@@ -76,6 +80,7 @@
                         <td>{{ c.data_jogo.strftime('%d/%m/%Y') if c.data_jogo else '' }}</td>
                         <td>{{ c.titulo }}</td>
                         <td>{{ c.adversario or '—' }}</td>
+                        <td>{{ c.treinador or '—' }}</td>
                         <td>
                             {% if c.jogadoras %}
                                 {% for j in c.jogadoras %}
@@ -86,9 +91,14 @@
                             {% endif %}
                         </td>
                         <td>{{ c.created_by or '—' }}</td>
+                        <td>
+                            <a href="{{ url_for('baixar_convocatoria_pdf', id=c.id) }}" class="btn btn-sm btn-outline-premium">
+                                <i class="fas fa-file-pdf"></i> Baixar
+                            </a>
+                        </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" class="text-center text-muted">Sem convocatórias registadas.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted">Sem convocatórias registadas.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

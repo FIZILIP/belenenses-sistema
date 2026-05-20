@@ -6,8 +6,14 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from flask import send_file
 import os
+from io import BytesIO
+import math
+from urllib.request import urlopen
 from supabase import create_client, Client
 from sqlalchemy import text
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+from PIL import Image
 
 SUPABASE_URL = "https://qkkjwiyxsiununimsipp.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFra2p3aXl4c2l1bnVuaW1zaXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTA2OTYsImV4cCI6MjA5NDc2NjY5Nn0.flpfkgAal_Zbmei2tNDfJrbhvgLUJT9GHYj2Iw03mkU"
@@ -88,6 +94,18 @@ def garantir_colunas_permissoes_usuario():
             except Exception:
                 db.session.rollback()
 
+def garantir_colunas_convocatoria():
+    try:
+        db.session.execute(text("ALTER TABLE convocatoria ADD COLUMN IF NOT EXISTS treinador VARCHAR(100)"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        try:
+            db.session.execute(text("ALTER TABLE convocatoria ADD COLUMN treinador VARCHAR(100)"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
 PERMISSAO_POR_ENDPOINT = {
     "atletas": "can_manage_atletas",
     "editar_atleta": "can_manage_atletas",
@@ -132,6 +150,7 @@ PERMISSAO_POR_ENDPOINT = {
     "log_temporada_atletas": "can_manage_atletas",
     "adicionar_evento_atleta": "can_manage_atletas",
     "convocatorias": "can_manage_reunioes",
+    "baixar_convocatoria_pdf": "can_manage_reunioes",
 }
 
 PERFIS_DIRECAO = {
@@ -209,6 +228,54 @@ def atleta_esta_apta(atleta):
         if ficha.status == 'em_tratamento':
             return False
     return True
+
+def _pdf_escape(texto):
+    return texto.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+def gerar_pdf_simples(linhas):
+    texto_pdf = "BT /F1 11 Tf 50 800 Td 14 TL "
+    first = True
+    for linha in linhas:
+        safe = _pdf_escape(linha)
+        if first:
+            texto_pdf += f"({safe}) Tj "
+            first = False
+        else:
+            texto_pdf += f"T* ({safe}) Tj "
+    texto_pdf += "ET"
+    stream = texto_pdf.encode("latin-1", errors="replace")
+
+    objs = []
+    objs.append(b"1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n")
+    objs.append(b"2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n")
+    objs.append(b"3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>endobj\n")
+    objs.append(b"4 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj\n")
+    objs.append(f"5 0 obj<< /Length {len(stream)} >>stream\n".encode("latin-1") + stream + b"\nendstream endobj\n")
+
+    pdf = b"%PDF-1.4\n"
+    offsets = [0]
+    for obj in objs:
+        offsets.append(len(pdf))
+        pdf += obj
+    xref_pos = len(pdf)
+    pdf += f"xref\n0 {len(offsets)}\n".encode("latin-1")
+    pdf += b"0000000000 65535 f \n"
+    for off in offsets[1:]:
+        pdf += f"{off:010d} 00000 n \n".encode("latin-1")
+    pdf += f"trailer<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF".encode("latin-1")
+    return pdf
+
+def carregar_foto_atleta(atleta):
+    if not atleta.foto:
+        return None
+    url = f"https://qkkjwiyxsiununimsipp.supabase.co/storage/v1/object/public/atletas/{atleta.foto}"
+    try:
+        with urlopen(url, timeout=8) as resp:
+            data = resp.read()
+        img = Image.open(BytesIO(data)).convert("RGB")
+        return img
+    except Exception:
+        return None
 
 @app.context_processor
 def inject_permissions():
@@ -615,6 +682,7 @@ def convocatorias():
             convocatoria = Convocatoria(
                 titulo=titulo,
                 adversario=request.form.get('adversario', '').strip() or None,
+                treinador=request.form.get('treinador', '').strip() or None,
                 data_jogo=datetime.strptime(request.form['data_jogo'], '%Y-%m-%d').date() if request.form.get('data_jogo') else datetime.now().date(),
                 observacoes=request.form.get('observacoes', ''),
                 created_by=current_user.username
@@ -643,6 +711,74 @@ def convocatorias():
         indisponiveis=indisponiveis,
         convocatorias=convocatorias_list
     )
+
+@app.route('/convocatorias/pdf/<int:id>')
+@login_required
+def baixar_convocatoria_pdf(id):
+    convocatoria = Convocatoria.query.get_or_404(id)
+    convocadas = [j.atleta for j in convocatoria.jogadoras if j.atleta]
+
+    arquivo = BytesIO()
+    with PdfPages(arquivo) as pdf:
+        fig = plt.figure(figsize=(8.27, 11.69))
+        fig.patch.set_facecolor("white")
+        y = 0.96
+        fig.text(0.08, y, "Belenenses - Convocatoria Oficial", fontsize=16, weight="bold")
+        y -= 0.04
+        fig.text(0.08, y, f"Titulo: {convocatoria.titulo}", fontsize=11)
+        y -= 0.025
+        fig.text(0.08, y, f"Adversario: {convocatoria.adversario or '-'}", fontsize=11)
+        y -= 0.025
+        data_jogo = convocatoria.data_jogo.strftime('%d/%m/%Y') if convocatoria.data_jogo else '-'
+        fig.text(0.08, y, f"Data do Jogo: {data_jogo}", fontsize=11)
+        y -= 0.025
+        fig.text(0.08, y, f"Treinador: {convocatoria.treinador or '-'}", fontsize=11)
+        y -= 0.04
+        fig.text(0.08, y, "Jogadoras Convocadas:", fontsize=12, weight="bold")
+        y -= 0.03
+
+        if convocadas:
+            for idx, atleta in enumerate(convocadas, start=1):
+                fig.text(0.1, y, f"{idx}. {atleta.nome}", fontsize=10)
+                y -= 0.022
+                if y < 0.08:
+                    break
+        else:
+            fig.text(0.1, y, "Nenhuma jogadora convocada.", fontsize=10)
+            y -= 0.022
+
+        if convocatoria.observacoes:
+            y -= 0.02
+            fig.text(0.08, y, "Observacoes:", fontsize=11, weight="bold")
+            y -= 0.025
+            fig.text(0.1, y, convocatoria.observacoes[:2500], fontsize=9, wrap=True)
+        pdf.savefig(fig, bbox_inches="tight")
+        plt.close(fig)
+
+        if convocadas:
+            cols = 3
+            rows = math.ceil(len(convocadas) / cols)
+            fig2, axs = plt.subplots(rows, cols, figsize=(8.27, 11.69))
+            fig2.suptitle("Jogadoras Convocadas - Fotos", fontsize=14, weight="bold")
+            axs = axs.flatten() if hasattr(axs, "flatten") else [axs]
+            for ax in axs:
+                ax.axis("off")
+            for i, atleta in enumerate(convocadas):
+                ax = axs[i]
+                foto = carregar_foto_atleta(atleta)
+                if foto is not None:
+                    ax.imshow(foto)
+                else:
+                    ax.text(0.5, 0.5, "Sem foto", ha="center", va="center", fontsize=9)
+                    ax.set_facecolor("#f2f2f2")
+                ax.set_title(atleta.nome, fontsize=9)
+                ax.axis("off")
+            pdf.savefig(fig2, bbox_inches="tight")
+            plt.close(fig2)
+
+    arquivo.seek(0)
+    nome_arquivo = f"convocatoria_{convocatoria.id}.pdf"
+    return send_file(arquivo, mimetype="application/pdf", as_attachment=True, download_name=nome_arquivo)
 
 # ==================== ROTAS PARA COMISSÃO TÉCNICA ====================
 @app.route('/comissao', methods=['GET', 'POST'])
@@ -1285,6 +1421,7 @@ with app.app_context():
     db.create_all()
     garantir_colunas_atleta()
     garantir_colunas_permissoes_usuario()
+    garantir_colunas_convocatoria()
     try:
         db.session.execute(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS cargo_direcao VARCHAR(50)"))
         db.session.commit()
