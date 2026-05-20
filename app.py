@@ -875,6 +875,27 @@ with app.app_context():
     db.create_all()
     create_admin()
 
+@app.route('/migrar')
+def migrar():
+    from sqlalchemy import text
+    colunas = [
+        ('salario', 'FLOAT'),
+        ('premios', 'FLOAT'),
+        ('contrato_inicio', 'DATE'),
+        ('contrato_fim', 'DATE'),
+        ('iban', 'VARCHAR(34)'),
+        ('status', 'VARCHAR(20) DEFAULT \'ativo\'')
+    ]
+    resultado = []
+    for nome, tipo in colunas:
+        try:
+            db.session.execute(text(f'ALTER TABLE atleta ADD COLUMN {nome} {tipo}'))
+            db.session.commit()
+            resultado.append(f'✅ {nome}')
+        except Exception as e:
+            resultado.append(f'⏭️ {nome}: {e}')
+    return '<br>'.join(resultado)
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5002))
     app.run(debug=False, host='0.0.0.0', port=port)
