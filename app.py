@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from flask import send_file
 import os
 from supabase import create_client, Client
+from sqlalchemy import text
 
 SUPABASE_URL = "https://qkkjwiyxsiununimsipp.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFra2p3aXl4c2l1bnVuaW1zaXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTA2OTYsImV4cCI6MjA5NDc2NjY5Nn0.flpfkgAal_Zbmei2tNDfJrbhvgLUJT9GHYj2Iw03mkU"
@@ -44,6 +45,25 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def garantir_colunas_atleta():
+    colunas = [
+        ("iban", "VARCHAR(34)"),
+        ("cartoes_amarelos", "INTEGER DEFAULT 0"),
+        ("cartoes_vermelhos", "INTEGER DEFAULT 0"),
+        ("jogos_suspensao", "INTEGER DEFAULT 0"),
+    ]
+    for nome, tipo in colunas:
+        try:
+            db.session.execute(text(f"ALTER TABLE atleta ADD COLUMN IF NOT EXISTS {nome} {tipo}"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            try:
+                db.session.execute(text(f"ALTER TABLE atleta ADD COLUMN {nome} {tipo}"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -262,6 +282,69 @@ def deletar_atleta(id):
     db.session.delete(atleta)
     db.session.commit()
     flash(f'Atleta {nome} removido!', 'success')
+    return redirect(url_for('atletas'))
+
+@app.route('/atletas/cartao/<int:id>', methods=['POST'])
+@login_required
+def registrar_cartao(id):
+    atleta = Atleta.query.get_or_404(id)
+    tipo = (request.form.get('tipo_cartao') or '').strip().lower()
+
+    try:
+        atleta.cartoes_amarelos = atleta.cartoes_amarelos or 0
+        atleta.cartoes_vermelhos = atleta.cartoes_vermelhos or 0
+        atleta.jogos_suspensao = atleta.jogos_suspensao or 0
+
+        if tipo == 'amarelo':
+            atleta.cartoes_amarelos += 1
+            if atleta.cartoes_amarelos % 5 == 0:
+                atleta.jogos_suspensao += 1
+                flash(f'{atleta.nome}: 5 amarelos acumulados. Suspensão automática de 1 jogo.', 'warning')
+            else:
+                flash(f'Cartão amarelo registado para {atleta.nome}.', 'success')
+        elif tipo == 'vermelho':
+            jogos = int(request.form.get('jogos_suspensao_vermelho') or 1)
+            jogos = max(1, jogos)
+            atleta.cartoes_vermelhos += 1
+            atleta.jogos_suspensao += jogos
+            flash(f'Cartão vermelho registado para {atleta.nome}. Suspensão: {jogos} jogo(s).', 'warning')
+        else:
+            flash('Tipo de cartão inválido.', 'error')
+            return redirect(url_for('atletas'))
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao registar cartão: {str(e)}', 'error')
+
+    return redirect(url_for('atletas'))
+
+@app.route('/atletas/suspensao/<int:id>', methods=['POST'])
+@login_required
+def editar_suspensao(id):
+    atleta = Atleta.query.get_or_404(id)
+    try:
+        jogos = int(request.form.get('jogos_suspensao') or 0)
+        atleta.jogos_suspensao = max(0, jogos)
+        db.session.commit()
+        flash(f'Suspensão de {atleta.nome} atualizada para {atleta.jogos_suspensao} jogo(s).', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao atualizar suspensão: {str(e)}', 'error')
+    return redirect(url_for('atletas'))
+
+@app.route('/atletas/cumprir-suspensao/<int:id>', methods=['POST'])
+@login_required
+def cumprir_suspensao(id):
+    atleta = Atleta.query.get_or_404(id)
+    try:
+        atual = atleta.jogos_suspensao or 0
+        atleta.jogos_suspensao = max(0, atual - 1)
+        db.session.commit()
+        flash(f'{atleta.nome}: 1 jogo de suspensão cumprido.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao atualizar suspensão: {str(e)}', 'error')
     return redirect(url_for('atletas'))
 
 # ==================== ROTAS PARA COMISSÃO TÉCNICA ====================
@@ -875,6 +958,7 @@ def deletar_documento(id):
 # Criar tabelas ao iniciar
 with app.app_context():
     db.create_all()
+    garantir_colunas_atleta()
     create_admin()
 
 if __name__ == '__main__':

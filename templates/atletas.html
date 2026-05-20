@@ -291,6 +291,19 @@
                 </a>
             </div>
             {% endif %}
+            <div class="info-linha">
+                <i class="fas fa-square" style="color: #FACC15;"></i> Amarelos: {{ atleta.cartoes_amarelos or 0 }}
+            </div>
+            <div class="info-linha">
+                <i class="fas fa-square" style="color: #EF4444;"></i> Vermelhos: {{ atleta.cartoes_vermelhos or 0 }}
+            </div>
+            {% if (atleta.jogos_suspensao or 0) > 0 %}
+            <div style="margin: 10px 0;">
+                <span style="background: rgba(239,68,68,0.2); color: #EF4444; padding: 5px 12px; border-radius: 14px; font-size: 12px; font-weight: 700;">
+                    <i class="fas fa-ban"></i> Suspenso: {{ atleta.jogos_suspensao }} jogo(s)
+                </span>
+            </div>
+            {% endif %}
             {% if atleta.altura %}
             <div class="info-linha">
                 <i class="fas fa-ruler"></i> {{ "%.2f"|format(atleta.altura) }}m
@@ -357,9 +370,53 @@
             <a href="{{ url_for('editar_atleta', id=atleta.id) }}" class="btn-card btn-editar">
                 <i class="fas fa-edit"></i> Editar
             </a>
+            <button type="button" class="btn-card" data-bs-toggle="modal" data-bs-target="#modalDisciplina{{ atleta.id }}"
+                    style="background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.35);">
+                <i class="fas fa-id-card"></i> Cartões
+            </button>
+            {% if (atleta.jogos_suspensao or 0) > 0 %}
+            <form method="POST" action="{{ url_for('cumprir_suspensao', id=atleta.id) }}" style="width: 100%;">
+                <button type="submit" class="btn-card" style="width: 100%; background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.35);">
+                    <i class="fas fa-flag-checkered"></i> Cumprir 1 jogo
+                </button>
+            </form>
+            {% endif %}
             <a href="{{ url_for('deletar_atleta', id=atleta.id) }}" class="btn-card btn-remover" onclick="return confirm('Remover {{ atleta.nome }}?')">
                 <i class="fas fa-trash"></i> Remover
             </a>
+        </div>
+    </div>
+    <div class="modal fade modal-premium" id="modalDisciplina{{ atleta.id }}" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-id-card me-2" style="color: #F59E0B;"></i>Disciplina - {{ atleta.nome }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form method="POST" action="{{ url_for('registrar_cartao', id=atleta.id) }}" class="mb-4">
+                        <label class="form-label">Lançar Cartão</label>
+                        <select name="tipo_cartao" class="form-select mb-2" required>
+                            <option value="amarelo">Amarelo</option>
+                            <option value="vermelho">Vermelho</option>
+                        </select>
+                        <label class="form-label">Jogos de suspensão (se vermelho)</label>
+                        <input type="number" name="jogos_suspensao_vermelho" min="1" value="1" class="form-control mb-3">
+                        <button type="submit" class="btn-add-flutuante w-100">
+                            <i class="fas fa-save"></i> Registar Cartão
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('editar_suspensao', id=atleta.id) }}">
+                        <label class="form-label">Editar suspensão manualmente</label>
+                        <input type="number" name="jogos_suspensao" min="0" value="{{ atleta.jogos_suspensao or 0 }}" class="form-control mb-3" required>
+                        <button type="submit" class="btn btn-outline-premium w-100">
+                            <i class="fas fa-pen"></i> Atualizar Suspensão
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
     {% endfor %}

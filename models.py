@@ -33,6 +33,9 @@ class Atleta(db.Model):
     foto = db.Column(db.String(200))
     status = db.Column(db.String(20), default='ativo')
     iban = db.Column(db.String(34))
+    cartoes_amarelos = db.Column(db.Integer, default=0)
+    cartoes_vermelhos = db.Column(db.Integer, default=0)
+    jogos_suspensao = db.Column(db.Integer, default=0)
 
 class ComissaoTecnica(db.Model):
     id = db.Column(db.Integer, primary_key=True)
