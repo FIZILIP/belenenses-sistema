@@ -33,7 +33,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER_COMISSAO'], exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER_DOCS'], exist_ok=True)
 
-from models import db, User, Atleta, ComissaoTecnica, Compra, GastoMensal, ContaFixa, Inventario, Reuniao, Evento, FichaMedica, Scouting, Patrocinio, Documento
+from models import db, User, Atleta, ComissaoTecnica, Compra, GastoMensal, ContaFixa, Inventario, Reuniao, Evento, FichaMedica, Scouting, Patrocinio, Documento, EventoAtleta, Convocatoria, Convocada
 
 db.init_app(app)
 
@@ -129,6 +129,9 @@ PERMISSAO_POR_ENDPOINT = {
     "download_documento": "can_manage_documentos",
     "deletar_documento": "can_manage_documentos",
     "direcao": "can_manage_reunioes",
+    "log_temporada_atletas": "can_manage_atletas",
+    "adicionar_evento_atleta": "can_manage_atletas",
+    "convocatorias": "can_manage_reunioes",
 }
 
 PERFIS_DIRECAO = {
@@ -198,6 +201,14 @@ def usuario_tem_permissao(permissao):
     if current_user.is_admin:
         return True
     return bool(getattr(current_user, permissao, False))
+
+def atleta_esta_apta(atleta):
+    if (atleta.jogos_suspensao or 0) > 0:
+        return False
+    for ficha in atleta.fichas_medicas:
+        if ficha.status == 'em_tratamento':
+            return False
+    return True
 
 @app.context_processor
 def inject_permissions():
@@ -563,6 +574,75 @@ def cumprir_suspensao(id):
         db.session.rollback()
         flash(f'Erro ao atualizar suspensão: {str(e)}', 'error')
     return redirect(url_for('atletas'))
+
+@app.route('/atletas/log-temporada')
+@login_required
+def log_temporada_atletas():
+    atletas = Atleta.query.order_by(Atleta.nome.asc()).all()
+    eventos = EventoAtleta.query.order_by(EventoAtleta.data_evento.desc(), EventoAtleta.id.desc()).all()
+    return render_template('log_temporada_atletas.html', atletas=atletas, eventos=eventos)
+
+@app.route('/atletas/log-temporada/adicionar', methods=['POST'])
+@login_required
+def adicionar_evento_atleta():
+    try:
+        evento = EventoAtleta(
+            atleta_id=int(request.form['atleta_id']),
+            data_evento=datetime.strptime(request.form['data_evento'], '%Y-%m-%d').date() if request.form.get('data_evento') else datetime.now().date(),
+            tipo=request.form['tipo'],
+            titulo=request.form['titulo'],
+            descricao=request.form.get('descricao', ''),
+            created_by=current_user.username
+        )
+        db.session.add(evento)
+        db.session.commit()
+        flash('Evento adicionado ao log da atleta!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao adicionar evento: {str(e)}', 'error')
+    return redirect(url_for('log_temporada_atletas'))
+
+@app.route('/convocatorias', methods=['GET', 'POST'])
+@login_required
+def convocatorias():
+    if request.method == 'POST':
+        try:
+            titulo = request.form.get('titulo', '').strip()
+            if not titulo:
+                flash('Título da convocatória é obrigatório.', 'error')
+                return redirect(url_for('convocatorias'))
+
+            convocatoria = Convocatoria(
+                titulo=titulo,
+                adversario=request.form.get('adversario', '').strip() or None,
+                data_jogo=datetime.strptime(request.form['data_jogo'], '%Y-%m-%d').date() if request.form.get('data_jogo') else datetime.now().date(),
+                observacoes=request.form.get('observacoes', ''),
+                created_by=current_user.username
+            )
+            db.session.add(convocatoria)
+            db.session.flush()
+
+            atletas_ids = request.form.getlist('atletas_ids')
+            for atleta_id in atletas_ids:
+                db.session.add(Convocada(convocatoria_id=convocatoria.id, atleta_id=int(atleta_id)))
+
+            db.session.commit()
+            flash('Convocatória criada com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao criar convocatória: {str(e)}', 'error')
+        return redirect(url_for('convocatorias'))
+
+    atletas = Atleta.query.order_by(Atleta.nome.asc()).all()
+    aptas = [a for a in atletas if atleta_esta_apta(a)]
+    indisponiveis = [a for a in atletas if not atleta_esta_apta(a)]
+    convocatorias_list = Convocatoria.query.order_by(Convocatoria.data_jogo.desc(), Convocatoria.id.desc()).all()
+    return render_template(
+        'convocatorias.html',
+        aptas=aptas,
+        indisponiveis=indisponiveis,
+        convocatorias=convocatorias_list
+    )
 
 # ==================== ROTAS PARA COMISSÃO TÉCNICA ====================
 @app.route('/comissao', methods=['GET', 'POST'])

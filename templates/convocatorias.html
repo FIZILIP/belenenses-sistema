@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-white fw-bold mb-1"><i class="fas fa-list-check me-2" style="color:#FFD700;"></i>Convocatórias</h2>
+        <p class="text-muted mb-0" style="font-size:14px;">Seleciona automaticamente apenas jogadoras aptas (sem lesão ativa e sem suspensão).</p>
+    </div>
+</div>
+
+<div class="table-container mb-4">
+    <div class="table-header"><div class="chart-title">Nova Convocatória</div></div>
+    <div class="p-3">
+        <form method="POST" action="{{ url_for('convocatorias') }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Título</label>
+                    <input type="text" name="titulo" class="form-control" required placeholder="Ex: Jornada 8">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Adversário</label>
+                    <input type="text" name="adversario" class="form-control" placeholder="Nome do adversário">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Data do Jogo</label>
+                    <input type="date" name="data_jogo" class="form-control" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Jogadoras Aptas</label>
+                    <div class="row g-2">
+                        {% for atleta in aptas %}
+                        <div class="col-md-4">
+                            <label class="form-check-label text-white">
+                                <input type="checkbox" name="atletas_ids" value="{{ atleta.id }}" class="form-check-input me-2">
+                                {{ atleta.nome }}
+                            </label>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">Nenhuma jogadora apta no momento.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if indisponiveis %}
+                <div class="col-12">
+                    <small class="text-muted">Indisponíveis:</small>
+                    <div>
+                        {% for atleta in indisponiveis %}
+                        <span class="badge bg-danger me-1">{{ atleta.nome }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                <div class="col-12">
+                    <label class="form-label">Observações</label>
+                    <textarea name="observacoes" rows="2" class="form-control"></textarea>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn-add-flutuante"><i class="fas fa-save"></i> Guardar Convocatória</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-header"><div class="chart-title">Convocatórias Registadas</div></div>
+    <div class="p-3">
+        <div class="table-responsive">
+            <table class="custom-table table">
+                <thead>
+                    <tr><th>Data</th><th>Título</th><th>Adversário</th><th>Convocadas</th><th>Criada por</th></tr>
+                </thead>
+                <tbody>
+                    {% for c in convocatorias %}
+                    <tr>
+                        <td>{{ c.data_jogo.strftime('%d/%m/%Y') if c.data_jogo else '' }}</td>
+                        <td>{{ c.titulo }}</td>
+                        <td>{{ c.adversario or '—' }}</td>
+                        <td>
+                            {% if c.jogadoras %}
+                                {% for j in c.jogadoras %}
+                                    <span class="badge bg-primary me-1">{{ j.atleta.nome }}</span>
+                                {% endfor %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>{{ c.created_by or '—' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-muted">Sem convocatórias registadas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

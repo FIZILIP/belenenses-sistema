@@ -175,3 +175,31 @@ class Documento(db.Model):
     descricao = db.Column(db.Text)
     data_upload = db.Column(db.DateTime, default=datetime.utcnow)
     uploaded_by = db.Column(db.String(80))
+
+class EventoAtleta(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    atleta_id = db.Column(db.Integer, db.ForeignKey('atleta.id'), nullable=False)
+    data_evento = db.Column(db.Date, nullable=False)
+    tipo = db.Column(db.String(50), nullable=False)
+    titulo = db.Column(db.String(150), nullable=False)
+    descricao = db.Column(db.Text)
+    created_by = db.Column(db.String(80))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    atleta = db.relationship('Atleta', backref='eventos_temporada')
+
+class Convocatoria(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(150), nullable=False)
+    adversario = db.Column(db.String(100))
+    data_jogo = db.Column(db.Date, nullable=False)
+    observacoes = db.Column(db.Text)
+    created_by = db.Column(db.String(80))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Convocada(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    convocatoria_id = db.Column(db.Integer, db.ForeignKey('convocatoria.id'), nullable=False)
+    atleta_id = db.Column(db.Integer, db.ForeignKey('atleta.id'), nullable=False)
+    status = db.Column(db.String(20), default='convocada')
+    convocatoria = db.relationship('Convocatoria', backref='jogadoras')
+    atleta = db.relationship('Atleta')

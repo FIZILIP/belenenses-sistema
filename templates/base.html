@@ -407,6 +407,9 @@
         <div class="nav-item">
             <a href="{{ url_for('atletas') }}" class="nav-link-custom"> <i class="fas fa-users"></i> Atletas </a>
         </div>
+        <div class="nav-item">
+            <a href="{{ url_for('log_temporada_atletas') }}" class="nav-link-custom"> <i class="fas fa-clipboard-list"></i> Log Atletas </a>
+        </div>
         {% endif %}
         {% if current_user.is_admin or usuario_tem_permissao('can_manage_comissao') %}
         <div class="nav-item">
@@ -454,6 +457,9 @@
         </div>
         <div class="nav-item">
             <a href="{{ url_for('calendario') }}" class="nav-link-custom"> <i class="fas fa-calendar-week"></i> Calendário </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('convocatorias') }}" class="nav-link-custom"> <i class="fas fa-list-check"></i> Convocatórias </a>
         </div>
         {% endif %}
         {% if current_user.is_admin or usuario_tem_permissao('can_manage_documentos') %}
